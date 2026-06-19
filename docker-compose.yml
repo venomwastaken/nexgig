@@ -1,0 +1,35 @@
+# Docker Compose's job: instead of running three separate `docker run`
+# commands by hand (one for the database, one for the backend, one for
+# the frontend) and trying to wire them together yourself, this file
+# describes all of them once, and `docker compose up` starts everything,
+# already connected to each other.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexgig
+      POSTGRES_PASSWORD: nexgig
+      POSTGRES_DB: nexgig
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://nexgig:nexgig@db:5432/nexgig
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend/app:/app/app   # live-reload: code changes show up without rebuilding the image
+
+volumes:
+  pgdata:
