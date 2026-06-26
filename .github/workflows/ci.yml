@@ -7,6 +7,8 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/smoketest"
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm install
+        run: npm ci
 
       - name: Build
         working-directory: frontend
