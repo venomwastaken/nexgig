@@ -1,6 +1,7 @@
 import { Show, UserButton } from '@clerk/react'
 import React from 'react'
 import { Link } from 'react-router-dom'
+import Profile from '../components/Profile'
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
         <Show when="signed-in">
             <UserButton/>
         </Show>
+        <Profile />
     </div>
   )
 }
