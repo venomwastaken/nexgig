@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer
+
 
 # This is the entire backend for now. Its only job in Sprint 0
 # is to prove the server starts and responds — nothing about
@@ -23,13 +25,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+clerk_config = ClerkConfig(
+    jwks_url="http://localhost:8000"
+)
+
+clerk_auth = ClerkHTTPBearer(config=clerk_config)
+
 
 @app.get("/health")
-def health_check():
+def health_check(claims: dict = Depends(clerk_auth)):
     """
     A 'health check' endpoint is a tiny convention: it does no
     real work, it just confirms the server is up and can respond.
     Deployment platforms (Railway, Render) and Docker can ping this
     to know if the backend is alive.
     """
-    return {"status": "ok"}
+    return {"status": "ok", "user_id": claims["sub"]}
