@@ -6,3 +6,4 @@ fastapi-clerk-auth>=0.0.5
 sqlalchemy>=2.0.51
 alembic==1.18.5
 python-dotenv==1.2.2
+PyJWT[crypto]==2.13.0 
