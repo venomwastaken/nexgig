@@ -30,7 +30,7 @@ class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
 
     user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    email: str = Field(unique=True, index=True, nullable=False)  # .edu enforced at app/validation layer
+    email: str = Field(unique=True, index=True, nullable=True)  # .edu enforced at app/validation layer ()
     password_hash: Optional[str] = Field(default=None)
     is_email_verified: bool = Field(default=False)
     university_id: Optional[uuid.UUID] = Field(default=None)  # not modeled in this diagram
