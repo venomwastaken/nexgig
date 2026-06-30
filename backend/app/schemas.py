@@ -15,7 +15,6 @@ from .models import AccountStatus
 class UserAccountRead(SQLModel):
     user_id: uuid.UUID
     email: str
-    is_email_verified: bool
     account_status: AccountStatus
     created_at: datetime
     last_login: Optional[datetime] = None

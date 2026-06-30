@@ -30,15 +30,16 @@ class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
 
     user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    email: str = Field(unique=True, index=True, nullable=True)  # .edu enforced at app/validation layer ()
-    password_hash: Optional[str] = Field(default=None)
-    is_email_verified: bool = Field(default=False)
-    university_id: Optional[uuid.UUID] = Field(default=None)  # not modeled in this diagram
+
+    # Synced/cached from Clerk — not written or validated by app logic directly.
+    # Source of truth is Clerk; treat this as read-mostly until webhook sync exists.
+    email: str = Field(unique=True, index=True, nullable=False)  # .edu enforced at app/validation layer
+
+    university_id: Optional[uuid.UUID] = Field(default=None)  # TODO Sprint 2: not modeled yet
     account_status: AccountStatus = Field(default=AccountStatus.PENDING_VERIFICATION)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    last_login: Optional[datetime] = Field(default=None)
 
-    # --- Task E ---
+    # --- Clerk identity anchor ---
     clerk_id: str = Field(unique=True, index=True, nullable=False)
 
     wallet: Optional["UserWallet"] = Relationship(
@@ -56,6 +57,9 @@ class UserAccount(SQLModel, table=True):
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
+    __tablename__ = "user_account"
+
+
 
 
 class UserWallet(SQLModel, table=True):
