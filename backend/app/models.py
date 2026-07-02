@@ -82,7 +82,7 @@ class UserWallet(SQLModel, table=True):
 class UserProfile(SQLModel, table=True):
     __tablename__ = "user_profile"
 
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    profile_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     first_name: str
     last_name: str
@@ -94,19 +94,17 @@ class UserProfile(SQLModel, table=True):
 
     user: UserAccount = Relationship(back_populates="profile")
 
+class Skill(SQLModel, table=True):
+    __tablename__ = "skill"
+
+    skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(unique=True, index=True)
+
 class UserSkillLink(SQLModel, table=True):
     __tablename__ = "user_skill_link"
 
-    user_profile_id: uuid.UUID = Field(foreign_key="user_profile.id", primary_key=True)
-    skill_id: int = Field(foreign_key="skill.id", primary_key=True)
-
-class UserSkill(SQLModel, table=True):
-    __tablename__ = "user_skill"
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(unique=True, index=True)
-
-
+    user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
+    skill_id: uuid.UUID   = Field(foreign_key="skill.skill_id", primary_key=True)
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
