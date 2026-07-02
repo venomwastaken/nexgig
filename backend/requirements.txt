@@ -2,6 +2,8 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 sqlmodel==0.0.22
 psycopg2-binary==2.9.9
-python-dotenv==1.0.1
 fastapi-clerk-auth>=0.0.5
 sqlalchemy>=2.0.51
+alembic==1.18.5
+python-dotenv==1.2.2
+PyJWT[crypto]==2.13.0 
