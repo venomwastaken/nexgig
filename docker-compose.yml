@@ -24,6 +24,7 @@ services:
       - ./backend/.env
     environment:
       DATABASE_URL: postgresql://nexgig:nexgig@db:5432/nexgig
+      CLERK_JWKS_URL: ${CLERK_JWKS_URL}
     ports:
       - "8000:8000"
     depends_on:
