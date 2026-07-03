@@ -35,41 +35,36 @@ class UserWalletRead(SQLModel):
     total_services_received: int
 
 
-# ---------- StudentProfile ----------
+# ---------- UserProfile ----------
 
-class StudentProfileCreate(SQLModel):
+class UserProfileCreate(SQLModel):
     first_name: str
     last_name: str
-    profile_picture_url: Optional[str] = None
-    university_name: Optional[str] = None
-    major_field_of_study: Optional[str] = None
-    graduation_year: Optional[int] = Field(default=None, ge=1900, le=2100)
+    username: str
+    avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    timezone: Optional[str] = None
+    created_at: datetime
 
 
-class StudentProfileUpdate(SQLModel):
+class UserProfileUpdate(SQLModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    profile_picture_url: Optional[str] = None
-    university_name: Optional[str] = None
-    major_field_of_study: Optional[str] = None
-    graduation_year: Optional[int] = Field(default=None, ge=1900, le=2100)
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    timezone: Optional[str] = None
+    updated_at: datetime
 
 
-class StudentProfileRead(SQLModel):
-    profile_id: uuid.UUID
+class UserProfileRead(SQLModel):
+    id: uuid.UUID
     user_id: uuid.UUID
     first_name: str
     last_name: str
-    profile_picture_url: Optional[str] = None
-    university_name: Optional[str] = None
-    major_field_of_study: Optional[str] = None
-    graduation_year: Optional[int] = None
+    username: str
+    avatar_url: Optional[str] = None
     bio: Optional[str] = None
-    timezone: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 # ---------- UserSkill ----------
@@ -124,5 +119,5 @@ class UserReviewRead(SQLModel):
 class UserAccountWithProfile(UserAccountRead):
     """Handy when an endpoint wants account + profile + wallet in one response
     instead of forcing the frontend to make three calls."""
-    profile: Optional[StudentProfileRead] = None
+    profile: Optional[UserProfileRead] = None
     wallet: Optional[UserWalletRead] = None

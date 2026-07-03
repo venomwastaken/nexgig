@@ -45,10 +45,11 @@ class UserAccount(SQLModel, table=True):
     wallet: Optional["UserWallet"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
-    profile: Optional["StudentProfile"] = Relationship(
-        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    profile: Optional["UserProfile"] = Relationship(
+    back_populates="user",
+    sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )
-    skills: List["UserSkill"] = Relationship(back_populates="user")
+    skill_links: List["UserSkillLink"] = Relationship(back_populates="user")
     reviews_written: List["UserReview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
@@ -57,8 +58,6 @@ class UserAccount(SQLModel, table=True):
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
-    __tablename__ = "user_account"
-
 
 
 
@@ -79,36 +78,33 @@ class UserWallet(SQLModel, table=True):
     user: Optional[UserAccount] = Relationship(back_populates="wallet")
 
 
-class StudentProfile(SQLModel, table=True):
-    __tablename__ = "student_profile"
+class UserProfile(SQLModel, table=True):
+    __tablename__ = "user_profile"
 
     profile_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     first_name: str
     last_name: str
-    profile_picture_url: Optional[str] = Field(default=None)
-    university_name: Optional[str] = Field(default=None)
-    major_field_of_study: Optional[str] = Field(default=None)
-    graduation_year: Optional[int] = Field(default=None)
+    username: str = Field(default=None, unique=True, index=True)
+    avatar_url: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     bio: Optional[str] = Field(default=None)
-    timezone: Optional[str] = Field(default=None)
 
-    user: Optional[UserAccount] = Relationship(back_populates="profile")
+    user: UserAccount = Relationship(back_populates="profile")
 
-
-class UserSkill(SQLModel, table=True):
-    __tablename__ = "user_skill"
+class Skill(SQLModel, table=True):
+    __tablename__ = "skill"
 
     skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    category: str
-    skill_name: str
-    description: Optional[str] = Field(default=None)
-    hourly_rate_token_cost: Decimal = Field(sa_column=Column(Numeric(10, 2), nullable=False))
-    is_active: bool = Field(default=True)
+    name: str = Field(unique=True, index=True)
 
-    user: Optional[UserAccount] = Relationship(back_populates="skills")
+class UserSkillLink(SQLModel, table=True):
+    __tablename__ = "user_skill_link"
 
+    user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
+    skill_id: uuid.UUID   = Field(foreign_key="skill.skill_id", primary_key=True)
+    user: "UserAccount" = Relationship(back_populates="skill_links")
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
