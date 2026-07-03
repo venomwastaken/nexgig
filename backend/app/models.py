@@ -49,7 +49,7 @@ class UserAccount(SQLModel, table=True):
     back_populates="user",
     sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )
-    skills: List["UserSkill"] = Relationship(back_populates="user")
+    skill_links: List["UserSkillLink"] = Relationship(back_populates="user")
     reviews_written: List["UserReview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
@@ -58,7 +58,6 @@ class UserAccount(SQLModel, table=True):
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
-    __tablename__ = "user_account"
 
 
 
@@ -105,6 +104,7 @@ class UserSkillLink(SQLModel, table=True):
 
     user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
     skill_id: uuid.UUID   = Field(foreign_key="skill.skill_id", primary_key=True)
+    user: "UserAccount" = Relationship(back_populates="skill_links")
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
