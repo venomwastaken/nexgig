@@ -10,7 +10,7 @@
 # actually needed first.
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
@@ -19,6 +19,10 @@ from sqlalchemy import Column, Numeric
 from sqlmodel import Field, Relationship, SQLModel
 
 
+class GigStatus(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    PAUSED = "paused"
 class AccountStatus(str, Enum):
     PENDING_VERIFICATION = "pending_verification"
     ACTIVE = "active"
@@ -37,7 +41,7 @@ class UserAccount(SQLModel, table=True):
 
     university_id: Optional[uuid.UUID] = Field(default=None)  # TODO Sprint 2: not modeled yet
     account_status: AccountStatus = Field(default=AccountStatus.PENDING_VERIFICATION)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
     # --- Clerk identity anchor ---
     clerk_id: str = Field(unique=True, index=True, nullable=False)
@@ -49,7 +53,6 @@ class UserAccount(SQLModel, table=True):
     back_populates="user",
     sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )
-    skill_links: List["UserSkillLink"] = Relationship(back_populates="user")
     reviews_written: List["UserReview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
@@ -58,6 +61,7 @@ class UserAccount(SQLModel, table=True):
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
+    
 
 
 
@@ -87,11 +91,13 @@ class UserProfile(SQLModel, table=True):
     last_name: str
     username: str = Field(default=None, unique=True, index=True)
     avatar_url: Optional[str] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     bio: Optional[str] = Field(default=None)
 
     user: UserAccount = Relationship(back_populates="profile")
+    skill_links: List["UserSkillLink"] = Relationship(back_populates="profile")
+    gigs: List["Gig"] = Relationship(back_populates="profile")
 
 class Skill(SQLModel, table=True):
     __tablename__ = "skill"
@@ -104,7 +110,7 @@ class UserSkillLink(SQLModel, table=True):
 
     user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
     skill_id: uuid.UUID   = Field(foreign_key="skill.skill_id", primary_key=True)
-    user: "UserAccount" = Relationship(back_populates="skill_links")
+    profile: "UserProfile" = Relationship(back_populates="skill_links")
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
@@ -115,7 +121,7 @@ class UserReview(SQLModel, table=True):
     service_id: uuid.UUID  # references a Service entity not modeled in this diagram
     rating: int
     comment: Optional[str] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
     reviewer: Optional[UserAccount] = Relationship(
         back_populates="reviews_written",
@@ -125,3 +131,23 @@ class UserReview(SQLModel, table=True):
         back_populates="reviews_received",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
+
+class Gig(SQLModel, table=True):
+    __tablename__ = "gig"
+
+    gig_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    title: str
+    description: str
+    price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    status: GigStatus = Field(default=GigStatus.ACTIVE)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
+    profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", index=True)
+
+    profile: Optional[UserProfile] = Relationship(back_populates="gigs")
+
+class GigSkillLink(SQLModel, table=True):
+    __tablename__ = "gig_skill_link"
+
+    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
+    skill_id: uuid.UUID = Field(foreign_key="skill.skill_id", primary_key=True)
