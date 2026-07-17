@@ -146,8 +146,14 @@ class Gig(SQLModel, table=True):
 
     profile: Optional[UserProfile] = Relationship(back_populates="gigs")
 
-class GigSkillLink(SQLModel, table=True):
-    __tablename__ = "gig_skill_link"
+class Tag(SQLModel, table=True):
+    __tablename__ = "tag"
+
+    tag_id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+
+class GigTagLink(SQLModel, table=True):
+    __tablename__ = "gig_tag_link"
 
     gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
-    skill_id: uuid.UUID = Field(foreign_key="skill.skill_id", primary_key=True)
+    tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)

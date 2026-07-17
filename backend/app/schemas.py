@@ -132,21 +132,21 @@ class GigBase(SQLModel):
 
 # Schema for creating a gig
 class GigCreate(GigBase):
-    skill_ids: List[int] = []
+    tags: List[str] = []
 
 # Schema for modifying mutable gig fields
 class GigUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     budget: Optional[float] = None
-    skill_ids: Optional[List[int]] = None
+    tag_ids: Optional[List[uuid.UUID]] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(SQLModel):
     status: GigStatus
 
 # Nested simplified object to present related records cleanly
-class SkillRead(SQLModel):
+class TagRead(SQLModel):
     id: int
     name: str
 
@@ -159,7 +159,7 @@ class GigRead(GigBase):
     provider_id: int  # Corresponds to UserProfile.id
     status: GigStatus
     created_at: datetime
-    skills: List[SkillRead] = []
+    tags: List[TagRead] = []
 
     class Config:
         from_attributes = True

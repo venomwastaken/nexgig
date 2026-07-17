@@ -1,8 +1,10 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from typing import List, Optional
 
-from app.models import Gig, GigSkillLink, UserProfile
+from app.models import Gig, GigTagLink, GigTagLink, UserProfile,Tag
 from app.core.database import get_db
 from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
 # Assuming your auth dependency is located in your root auth or clerk_auth file
@@ -16,31 +18,47 @@ def create_gig(
     profile: UserProfile = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):
-    new_gig = Gig(
-        title=payload.title,
-        description=payload.description,
-        budget=payload.budget,
-        provider_id=profile.id
-    )
-    db.add(new_gig)
-    db.commit()
-    db.refresh(new_gig)
-    
-    for skill_id in payload.skill_ids:
-        link = GigSkillLink(gig_id=new_gig.id, skill_id=skill_id)
-        db.add(link)
-    db.commit()
-    db.refresh(new_gig)
-    return new_gig
+    try:
+        # Ensure the user has a profile
+        if not profile:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User profile not found")
+        
+        new_gig = Gig(
+            title=payload.title,
+            description=payload.description,
+            budget=payload.budget,
+            provider_id=profile.id
+        )
+        db.add(new_gig)
+        db.commit()
+        db.refresh(new_gig)
+        
+        tag_ids = []
+        for tag in payload.tags:
+            tag.lower()
+            id = db.search(Tag).filter(Tag.name == tag).first() or db.add(Tag(name=tag))
+            tag_ids.append(id)
+        db.commit() 
+        db.refresh(new_gig)  
+        
+        for tag_id in tag_ids:
+            link = GigTagLink(gig_id=new_gig.id, tag_id=tag_id)
+            db.add(link)
+        db.commit()
+        db.refresh(new_gig)
+        return new_gig
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @router.get("/list-gigs", response_model=List[GigRead])
 def list_gigs(
-    skill_id: Optional[int] = Query(None, description="Filter gigs by skill ID"),
+    tag_id: Optional[uuid.UUID] = Query(None, description="Filter gigs by tag ID"),
     db: Session = Depends(get_db)
 ):
     statement = select(Gig)
-    if skill_id:
-        statement = statement.join(GigSkillLink).where(GigSkillLink.skill_id == skill_id)
+    if tag_id:
+        statement = statement.join(GigTagLink).where(GigTagLink.tag_id == tag_id)
     return db.exec(statement).all()
 
 @router.get("/get-gig/{id}", response_model=GigRead)
@@ -66,15 +84,15 @@ def edit_gig(
         
     data = payload.model_dump(exclude_unset=True)
     for key, value in data.items():
-        if key != "skill_ids":
+        if key != "tag_ids":
             setattr(target, key, value)
             
     if payload.skill_ids is not None:
-        existing_links = db.exec(select(GigSkillLink).where(GigSkillLink.gig_id == id)).all()
+        existing_links = db.exec(select(GigTagLink).where(GigTagLink.gig_id == id)).all()
         for old_link in existing_links:
             db.delete(old_link)
         for next_id in payload.skill_ids:
-            db.add(GigSkillLink(gig_id=id, skill_id=next_id))
+            db.add(GigTagLink(gig_id=id, tag_id=next_id))
             
     db.add(target)
     db.commit()
