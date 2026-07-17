@@ -26,7 +26,7 @@ def create_gig(
         new_gig = Gig(
             title=payload.title,
             description=payload.description,
-            budget=payload.budget,
+            price=payload.price,
             provider_id=profile.id
         )
         db.add(new_gig)
