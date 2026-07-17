@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from typing import List, Optional
 
-from app.models import Gig, GigTagLink, GigTagLink, UserProfile,Tag
+from app.models import Gig, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
 from app.core.database import get_db
 from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
 # Assuming your auth dependency is located in your root auth or clerk_auth file
@@ -15,41 +15,40 @@ router = APIRouter()
 @router.post("/create-gig", response_model=GigRead, status_code=status.HTTP_201_CREATED)
 def create_gig(
     payload: GigCreate, 
-    profile: UserProfile = Depends(get_or_create_user),
+    user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):
-    try:
-        # Ensure the user has a profile
-        if not profile:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User profile not found")
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
         
-        new_gig = Gig(
-            title=payload.title,
-            description=payload.description,
-            price=payload.price,
-            provider_id=profile.id
-        )
-        db.add(new_gig)
-        db.commit()
-        db.refresh(new_gig)
+    # COMMENT OUT TRY/EXCEPT TEMPORARILY TO SEE THE REAL ERROR LOG
+    # try:
+    new_gig = Gig(
+        title=payload.title,
+        description=payload.description,
+        price=payload.price,
+        user_id=user.user_id
+    )
+    db.add(new_gig)
+    db.flush()
+    
+    for tag_name in set(payload.tags): # set() prevents duplicate link crashes
+        tag_name_clean = tag_name.lower().strip()
+        tag = db.query(Tag).filter(Tag.name == tag_name_clean).first()
+        if not tag:
+            tag = Tag(name=tag_name_clean)
+            db.add(tag)
+            db.flush() 
         
-        tag_ids = []
-        for tag in payload.tags:
-            tag.lower()
-            id = db.search(Tag).filter(Tag.name == tag).first() or db.add(Tag(name=tag))
-            tag_ids.append(id)
-        db.commit() 
-        db.refresh(new_gig)  
-        
-        for tag_id in tag_ids:
-            link = GigTagLink(gig_id=new_gig.id, tag_id=tag_id)
-            db.add(link)
-        db.commit()
-        db.refresh(new_gig)
-        return new_gig
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        link = GigTagLink(gig_id=new_gig.gig_id, tag_id=tag.tag_id)
+        db.add(link)
+
+    db.commit()
+    db.refresh(new_gig)
+    return new_gig
+    # except Exception as e:
+    #     db.rollback()
+    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @router.get("/list-gigs", response_model=List[GigRead])
 def list_gigs(
@@ -72,14 +71,14 @@ def get_gig(id: int, db: Session = Depends(get_db)):
 def edit_gig(
     id: int, 
     payload: GigUpdate,
-    profile: UserProfile = Depends(get_or_create_user),
+    user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):
     target = db.get(Gig, id)
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found")
         
-    if target.provider_id != profile.id:
+    if target.user_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to edit this gig")
         
     data = payload.model_dump(exclude_unset=True)
@@ -103,14 +102,14 @@ def edit_gig(
 def update_gig_status(
     id: int,
     payload: GigStatusUpdate,
-    profile: UserProfile = Depends(get_or_create_user),
+    user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):
     target = db.get(Gig, id)
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found")
         
-    if target.provider_id != profile.id:
+    if target.user_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this gig")
         
     target.status = payload.status
@@ -122,14 +121,14 @@ def update_gig_status(
 @router.delete("/delete-gig/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_gig(
     id: int,
-    profile: UserProfile = Depends(get_or_create_user),
+    user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):
     target = db.get(Gig, id)
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found")
         
-    if target.provider_id != profile.id:
+    if target.user_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this gig")
         
     db.delete(target)

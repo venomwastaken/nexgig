@@ -155,8 +155,8 @@ class TagRead(SQLModel):
 
 # Publicly visible representation of a Gig
 class GigRead(GigBase):
-    id: int
-    provider_id: int  # Corresponds to UserProfile.id
+    id: uuid.UUID
+    provider_id: uuid.UUID
     status: GigStatus
     created_at: datetime
     tags: List[TagRead] = []

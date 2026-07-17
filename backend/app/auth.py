@@ -5,7 +5,7 @@ from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-CLERK_JWKS_URL = os.environ["CLERK_JWKS_URL"]  # e.g. https://your-app.clerk.accounts.dev/.well-known/jwks.json
+CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL", "https://example.com/.well-known/jwks.json")
 
 security = HTTPBearer()
 
