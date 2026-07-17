@@ -53,6 +53,7 @@ class UserAccount(SQLModel, table=True):
     back_populates="user",
     sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )
+    gigs: List["Gig"] = Relationship(back_populates="user")
     reviews_written: List["UserReview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
@@ -97,7 +98,8 @@ class UserProfile(SQLModel, table=True):
 
     user: UserAccount = Relationship(back_populates="profile")
     skill_links: List["UserSkillLink"] = Relationship(back_populates="profile")
-    gigs: List["Gig"] = Relationship(back_populates="profile")
+    # gigs are linked to the user account directly
+    # keep profile-specific relationships here only if needed
 
 class Skill(SQLModel, table=True):
     __tablename__ = "skill"
@@ -142,15 +144,28 @@ class Gig(SQLModel, table=True):
     status: GigStatus = Field(default=GigStatus.ACTIVE)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
-    profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", index=True)
+    # Link to the user account that created/owns the gig
+    user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
 
-    profile: Optional[UserProfile] = Relationship(back_populates="gigs")
+    user: Optional[UserAccount] = Relationship(back_populates="gigs")
+
+    @property
+    def id(self) -> uuid.UUID:
+        return self.gig_id
+
+    @property
+    def provider_id(self) -> uuid.UUID:
+        return self.user_id
 
 class Tag(SQLModel, table=True):
     __tablename__ = "tag"
 
     tag_id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
+
+    @property
+    def id(self) -> int | None:
+        return self.tag_id
 
 class GigTagLink(SQLModel, table=True):
     __tablename__ = "gig_tag_link"
