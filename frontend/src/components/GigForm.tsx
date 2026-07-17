@@ -61,8 +61,8 @@ export default function GigForm() {
             };
 
             console.log("Transformed payload for API:", finalPayload);
-            // await api.post("/gig", finalPayload);
-
+            const res  = await api.post("/gigs/create-gig", finalPayload);
+            
             toast.success("Gig updated successfully!");
         } catch (error) {
             console.error("Form submission error", error);
