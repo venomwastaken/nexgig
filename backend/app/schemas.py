@@ -128,7 +128,7 @@ class UserAccountWithProfile(UserAccountRead):
 class GigBase(SQLModel):
     title: str
     description: str
-    budget: float
+    price: float
 
 # Schema for creating a gig
 class GigCreate(GigBase):
@@ -138,7 +138,7 @@ class GigCreate(GigBase):
 class GigUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    budget: Optional[float] = None
+    price: Optional[float] = None
     tag_ids: Optional[List[uuid.UUID]] = None
 
 # Schema for updating just the lifecycle state
