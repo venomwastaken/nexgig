@@ -1,15 +1,18 @@
-import { useState } from "react";
+import React from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Login from "./pages/login";
+import Home from "./pages/home";
+import Signup from "./pages/signup";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-
-type AuthView = "login" | "signup";
 
 export default function App() {
-  const [view, setView] = useState<AuthView>("login");
-
-  if (view === "signup") {
-    return <SignupPage onNavigateToLogin={() => setView("login")} />;
-  }
-
-  return <LoginPage onNavigateToSignUp={() => setView("signup")} />;
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/" element={<Home />} />
+            </Routes>
+        </BrowserRouter>
+    );
 }
