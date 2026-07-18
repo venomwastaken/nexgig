@@ -7,6 +7,7 @@ import AuthCard from "./ui/AuthCard";
 
 interface SignUpFormState {
   fullName: string;
+  userName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -109,9 +110,19 @@ export default function SignUpPage({ onSubmit, onNavigateToLogin }: SignUpPagePr
           autoComplete="name"
           value={form.fullName}
           onChange={handleChange}
-          placeholder="Joshua Mensah"
+          placeholder="Enter your Full Name"
         />
-
+    
+         <TextField
+          id="userName"
+          name="userName"
+          type="text"
+          label="User name"
+          autoComplete="name"
+          value={form.userName}
+          onChange={handleChange}
+          placeholder="Enter your username"/>
+        
         <TextField
           id="email"
           name="email"
@@ -120,7 +131,7 @@ export default function SignUpPage({ onSubmit, onNavigateToLogin }: SignUpPagePr
           autoComplete="email"
           value={form.email}
           onChange={handleChange}
-          placeholder="you@knust.edu.gh"
+          placeholder="Enter your email"
         />
 
         <PasswordField
