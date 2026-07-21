@@ -12,7 +12,7 @@ from app.api.v1.endpoints.users import get_or_create_user
 
 router = APIRouter()
 
-@router.post("/create-gig", response_model=GigRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=GigRead, status_code=status.HTTP_201_CREATED)
 def create_gig(
     payload: GigCreate, 
     user: UserAccount = Depends(get_or_create_user),
@@ -50,7 +50,7 @@ def create_gig(
     #     db.rollback()
     #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@router.get("/list-gigs", response_model=List[GigRead])
+@router.get("/", response_model=List[GigRead])
 def list_gigs(
     tag_id: Optional[uuid.UUID] = Query(None, description="Filter gigs by tag ID"),
     db: Session = Depends(get_db)
@@ -60,14 +60,14 @@ def list_gigs(
         statement = statement.join(GigTagLink).where(GigTagLink.tag_id == tag_id)
     return db.exec(statement).all()
 
-@router.get("/get-gig/{id}", response_model=GigRead)
+@router.get("/{id}", response_model=GigRead)
 def get_gig(id: int, db: Session = Depends(get_db)):
     target = db.get(Gig, id)
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found")
     return target
 
-@router.patch("/edit-gig/{id}", response_model=GigRead)
+@router.patch("/{id}", response_model=GigRead)
 def edit_gig(
     id: int, 
     payload: GigUpdate,
@@ -98,7 +98,7 @@ def edit_gig(
     db.refresh(target)
     return target
 
-@router.patch("/update-gig-status/{id}/status", response_model=GigRead)
+@router.patch("/{id}/status", response_model=GigRead)
 def update_gig_status(
     id: int,
     payload: GigStatusUpdate,
@@ -118,7 +118,7 @@ def update_gig_status(
     db.refresh(target)
     return target
 
-@router.delete("/delete-gig/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_gig(
     id: int,
     user: UserAccount = Depends(get_or_create_user),

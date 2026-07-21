@@ -44,7 +44,7 @@ class UserProfileCreate(SQLModel):
     username: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 
 class UserProfileUpdate(SQLModel):
@@ -53,7 +53,7 @@ class UserProfileUpdate(SQLModel):
     username: Optional[str] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 class UserProfileRead(SQLModel):
