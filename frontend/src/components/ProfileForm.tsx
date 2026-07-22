@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { useApi } from "@/hooks/useApi";
 import axios from "axios";
+import { myId } from "@/lib/auth";
 
 const formSchema = z.object({
     firstName: z.string().min(1, "First name is required"),
@@ -60,7 +61,24 @@ export default function ProfileForm() {
 
     async function onSubmit(values: FormInputValues) {
         try {
-            const response = await api.put("/profile/me", values);
+            const me = await api.get("/users/me");
+            const meData = me.data as { user_id?: string | number };
+            console.log("meData", meData)
+
+            if (!meData.user_id) {
+                throw new Error("No id found");
+            }
+
+            const data = {
+                first_name: values.firstName,
+                last_name: values.lastName,
+                username: values.username,
+                dob: values.dob,
+                avatar_url: values.avatar,
+                bio: values.bio,
+                user_id: meData.user_id,
+            };
+            const response = await api.post("/users/me/profile", data);
 
             toast.success("Profile updated successfully!", {
                 description: (

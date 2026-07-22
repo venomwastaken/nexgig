@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '@clerk/react';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const BASE_URL = rawBaseUrl.endsWith('/api/v1')
+  ? rawBaseUrl
+  : `${rawBaseUrl.replace(/\/$/, '')}/api/v1`;
 
 export function useApi() {
   const { getToken } = useAuth();

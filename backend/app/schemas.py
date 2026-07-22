@@ -42,6 +42,8 @@ class UserProfileCreate(SQLModel):
     first_name: str
     last_name: str
     username: str
+    dob: Optional[datetime] = None
+    user_id: uuid.UUID
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
     created_at: Optional[datetime] = None
