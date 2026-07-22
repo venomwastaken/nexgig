@@ -4,6 +4,8 @@ import TextField from "./ui/TextField";
 import PasswordField from "./ui/PasswordField";
 import Button from "./ui/Button";
 import AuthCard from "./ui/AuthCard";
+import { useSignIn } from "@clerk/react";
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormState {
     email: string;
@@ -37,6 +39,8 @@ export default function LoginPage({
     const [form, setForm] = useState<LoginFormState>(initialState);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { signIn, errors, fetchStatus } = useSignIn();
+    const navigate = useNavigate()
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -61,9 +65,16 @@ export default function LoginPage({
 
         try {
             setIsSubmitting(true);
-            if (onSubmit) {
-                await onSubmit(form.email, form.password, form.keepSignedIn);
+            const { error} = await signIn.password({
+                emailAddress: form.email,
+                password: form.password,
+            });
+
+            if(error){
+                throw new Error(error.message)
             }
+            navigate('/')
+            
         } catch (err) {
             setError(
                 err instanceof Error

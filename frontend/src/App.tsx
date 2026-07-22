@@ -4,13 +4,14 @@ import Login from "./pages/login";
 import Home from "./pages/home";
 import Signup from "./pages/signup";
 import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignupPage";
 
 export default function App() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<Signup />} />
+                <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/" element={<Home />} />
             </Routes>
         </BrowserRouter>
