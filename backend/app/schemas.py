@@ -3,7 +3,8 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
+from app.models import GigStatus
 
 from sqlmodel import Field, SQLModel
 
@@ -43,7 +44,7 @@ class UserProfileCreate(SQLModel):
     username: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 
 class UserProfileUpdate(SQLModel):
@@ -52,7 +53,7 @@ class UserProfileUpdate(SQLModel):
     username: Optional[str] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 class UserProfileRead(SQLModel):
@@ -121,3 +122,44 @@ class UserAccountWithProfile(UserAccountRead):
     instead of forcing the frontend to make three calls."""
     profile: Optional[UserProfileRead] = None
     wallet: Optional[UserWalletRead] = None
+
+# ---------- Gigs ----------
+# Base properties shared across schemas
+class GigBase(SQLModel):
+    title: str
+    description: str
+    price: float
+
+# Schema for creating a gig
+class GigCreate(GigBase):
+    tags: List[str] = []
+
+# Schema for modifying mutable gig fields
+class GigUpdate(SQLModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    tag_ids: Optional[List[uuid.UUID]] = None
+
+# Schema for updating just the lifecycle state
+class GigStatusUpdate(SQLModel):
+    status: GigStatus
+
+# Nested simplified object to present related records cleanly
+class TagRead(SQLModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+# Publicly visible representation of a Gig
+class GigRead(GigBase):
+    id: uuid.UUID
+    provider_id: uuid.UUID
+    status: GigStatus
+    created_at: datetime
+    tags: List[TagRead] = []
+
+    class Config:
+        from_attributes = True
