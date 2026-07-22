@@ -92,6 +92,7 @@ class UserProfile(SQLModel, table=True):
     last_name: str
     username: str = Field(default=None, unique=True, index=True)
     avatar_url: Optional[str] = Field(default=None)
+    dob : Optional[datetime] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     bio: Optional[str] = Field(default=None)
