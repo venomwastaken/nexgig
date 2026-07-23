@@ -10,7 +10,6 @@ import {
     FieldError,
     FieldGroup,
 } from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
@@ -25,6 +24,7 @@ import {
 import { useApi } from "@/hooks/useApi";
 import axios from "axios";
 import { myId } from "@/lib/auth";
+import Button from "@/pages/ui/Button";
 
 const formSchema = z.object({
     firstName: z.string().min(1, "First name is required"),
