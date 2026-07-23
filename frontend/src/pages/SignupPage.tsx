@@ -13,23 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useSignUp } from "@clerk/react";
 import { CustomGoogleOneTap, useGoogleOneTap } from "@/components/GoogleOneTap";
 
-interface SignUpFormState {
-    fullName: string;
-    userName: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    agreedToTerms: boolean;
-}
-
-interface SignUpPageProps {
-    onSubmit?: (
-        fullName: string,
-        email: string,
-        password: string,
-    ) => Promise<void> | void;
-    onNavigateToLogin?: () => void;
-}
 
 const formSchema = z
     .object({
