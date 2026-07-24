@@ -2,8 +2,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/geist";
+/* @import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist"; */
  
 @custom-variant dark (&:is(.dark *));
  
@@ -99,7 +99,10 @@
 }
  
 @theme inline {
-  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui;
+    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui;
+    --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
     --font-heading: 'Geist Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -187,7 +190,7 @@
   --nex-success-border: #234a3a;
   --nex-success-text: #7fd8b0;
  
-  --nex-font-display: "Syne", ui-sans-serif, system-ui;
+  --nex-font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui;
   --nex-font-heading: "Space Grotesk", ui-sans-serif, system-ui;
   --nex-font-label: ui-monospace, "SFMono-Regular", Menlo, monospace;
 }

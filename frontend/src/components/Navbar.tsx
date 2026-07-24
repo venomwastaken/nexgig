@@ -19,7 +19,7 @@ export default function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-[#1F1F1F] bg-[#0B0B0B]/95 backdrop-blur supports-backdrop-filter:bg-[#0B0B0B]/80">
-            <div className="mx-auto flex h-16 max-w-8xl items-center justify-between px-4 sm:px-6">
+            <div className="mx-auto flex h-16 max-w-[95%] items-center justify-between px-4 sm:px-6">
                 <Link to="/" className="shrink-0">
                     <Logo />
                 </Link>
