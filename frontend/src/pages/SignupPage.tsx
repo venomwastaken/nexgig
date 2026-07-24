@@ -12,6 +12,7 @@ import { Field, FieldError, FieldSeparator } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSignUp } from "@clerk/react";
 import { CustomGoogleOneTap, useGoogleOneTap } from "@/components/GoogleOneTap";
+import { useNavigate } from "react-router-dom";
 
 
 const formSchema = z
@@ -37,6 +38,7 @@ function SignUpPageContent() {
     const [error, setError] = useState<string | null>(null);
     const { signUp } = useSignUp();
     const { startGoogleOneTap } = useGoogleOneTap();
+    const navigate = useNavigate()
 
     const signUpForm = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -65,6 +67,8 @@ function SignUpPageContent() {
             if (error) {
                 throw new Error(error.message);
             }
+
+            navigate('/')
         } catch (err) {
             setError(
                 err instanceof Error
@@ -237,7 +241,7 @@ function SignUpPageContent() {
                 Already have an account?{" "}
                 <button
                     type="button"
-                    // onClick={onNavigateToLogin}
+                    onClick={() => navigate("/login")}
                     className="text-[#1b976f] hover:underline underline-offset-4"
                 >
                     Sign in

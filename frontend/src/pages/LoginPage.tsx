@@ -32,10 +32,7 @@ function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export default function LoginPage({
-    onSubmit,
-    onNavigateToSignUp,
-}: LoginPageProps) {
+export default function LoginPage() {
     const [form, setForm] = useState<LoginFormState>(initialState);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -174,7 +171,7 @@ export default function LoginPage({
                 New here?{" "}
                 <button
                     type="button"
-                    onClick={onNavigateToSignUp}
+                    onClick={()=> navigate("/signup")}
                     className="text-[#1b976f] hover:underline underline-offset-4"
                 >
                     Create an account
