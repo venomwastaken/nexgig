@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -42,19 +40,22 @@ class UserAccount(SQLModel, table=True):
 
     clerk_id: str = Field(unique=True, index=True, nullable=False)
 
-    wallet: Optional[UserWallet] = Relationship(
+    wallet: Optional["UserWallet"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
-    profile: Optional[UserProfile] = Relationship(
+    profile: Optional["UserProfile"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )
-    gigs: List[Gig] = Relationship(back_populates="user")
-    reviews_written: List[UserReview] = Relationship(
+    gigs: List["Gig"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"foreign_keys": "Gig.user_id"},
+    )
+    reviews_written: List["UserReview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
     )
-    reviews_received: List[UserReview] = Relationship(
+    reviews_received: List["UserReview"] = Relationship(
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
@@ -74,7 +75,7 @@ class UserWallet(SQLModel, table=True):
     total_services_provided: int = Field(default=0)
     total_services_received: int = Field(default=0)
 
-    user: Optional[UserAccount] = Relationship(back_populates="wallet")
+    user: Optional["UserAccount"] = Relationship(back_populates="wallet")
 
 
 class UserProfile(SQLModel, table=True):
@@ -91,8 +92,8 @@ class UserProfile(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     bio: Optional[str] = Field(default=None)
 
-    user: UserAccount = Relationship(back_populates="profile")
-    skill_links: List[UserSkillLink] = Relationship(back_populates="profile")
+    user: "UserAccount" = Relationship(back_populates="profile")
+    skill_links: List["UserSkillLink"] = Relationship(back_populates="profile")
 
 
 class Skill(SQLModel, table=True):
@@ -107,7 +108,7 @@ class UserSkillLink(SQLModel, table=True):
 
     user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
     skill_id: uuid.UUID = Field(foreign_key="skill.skill_id", primary_key=True)
-    profile: UserProfile = Relationship(back_populates="skill_links")
+    profile: "UserProfile" = Relationship(back_populates="skill_links")
 
 
 class UserReview(SQLModel, table=True):
@@ -121,11 +122,11 @@ class UserReview(SQLModel, table=True):
     comment: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
-    reviewer: Optional[UserAccount] = Relationship(
+    reviewer: Optional["UserAccount"] = Relationship(
         back_populates="reviews_written",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewer_id"},
     )
-    reviewee: Optional[UserAccount] = Relationship(
+    reviewee: Optional["UserAccount"] = Relationship(
         back_populates="reviews_received",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
@@ -148,7 +149,10 @@ class Gig(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
 
-    user: Optional[UserAccount] = Relationship(back_populates="gigs")
+    user: Optional["UserAccount"] = Relationship(
+        back_populates="gigs",
+        sa_relationship_kwargs={"foreign_keys": "Gig.user_id"},
+    )
 
     @property
     def id(self) -> uuid.UUID:

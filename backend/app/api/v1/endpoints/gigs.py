@@ -1,10 +1,10 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlmodel import Session, select
-from typing import List, Optional
+from sqlmodel import Session, or_, select
+from typing import Annotated, List, Optional
 
-from app.models import Gig, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
+from app.models import Gig, GigApprovalStatus, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
 from app.core.database import get_db
 from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
 # Assuming your auth dependency is located in your root auth or clerk_auth file
@@ -27,21 +27,23 @@ def create_gig(
         title=payload.title,
         description=payload.description,
         price=payload.price,
-        user_id=user.user_id
+        user_id=user.user_id,
+        approval_status=GigApprovalStatus.PENDING
     )
     db.add(new_gig)
     db.flush()
-    
-    for tag_name in set(payload.tags): # set() prevents duplicate link crashes
-        tag_name_clean = tag_name.lower().strip()
-        tag = db.query(Tag).filter(Tag.name == tag_name_clean).first()
-        if not tag:
-            tag = Tag(name=tag_name_clean)
-            db.add(tag)
-            db.flush() 
-        
-        link = GigTagLink(gig_id=new_gig.gig_id, tag_id=tag.tag_id)
-        db.add(link)
+
+    if payload.tags:
+        for tag_name in set(payload.tags): # set() prevents duplicate link crashes
+            tag_name_clean = tag_name.lower().strip()
+            tag = db.query(Tag).filter(Tag.name == tag_name_clean).first()
+            if not tag:
+                tag = Tag(name=tag_name_clean)
+                db.add(tag)
+                db.flush() 
+            
+            link = GigTagLink(gig_id=new_gig.gig_id, tag_id=tag.tag_id)
+            db.add(link)
 
     db.commit()
     db.refresh(new_gig)
@@ -52,24 +54,56 @@ def create_gig(
 
 @router.get("/", response_model=List[GigRead])
 def list_gigs(
-    tag_id: Optional[uuid.UUID] = Query(None, description="Filter gigs by tag ID"),
-    db: Session = Depends(get_db)
+    tag_id: Annotated[Optional[uuid.UUID], Query(description="Filter gigs by tag ID")] = None,
+    user: UserAccount = Depends(get_or_create_user),
+    db: Session = Depends(get_db),
 ):
     statement = select(Gig)
+
+    # 1. Tag Filter
     if tag_id:
         statement = statement.join(GigTagLink).where(GigTagLink.tag_id == tag_id)
+
+    # 2. B3 Visibility Filter
+    if user.is_admin:
+        # Admin sees all gigs (APPROVED, PENDING, REJECTED)
+        pass
+    else:
+        # Standard user sees all APPROVED gigs PLUS their own pending/rejected gigs
+        statement = statement.where(
+            or_(
+                Gig.approval_status == GigApprovalStatus.APPROVED,
+                Gig.user_id == user.user_id,
+            )
+        )
+
     return db.exec(statement).all()
 
 @router.get("/{id}", response_model=GigRead)
-def get_gig(id: int, db: Session = Depends(get_db)):
+def get_gig(
+    id: uuid.UUID, 
+    user: UserAccount = Depends(get_or_create_user),
+    db: Session = Depends(get_db)
+):
     target = db.get(Gig, id)
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found")
+
+    # B3 Visibility Rule: Hide pending/rejected gigs from everyone except the owner or an admin
+    if target.approval_status != GigApprovalStatus.APPROVED:
+        is_owner = target.user_id == user.user_id
+        is_admin = user.is_admin
+
+        if not (is_owner or is_admin):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Gig not found"
+            )
+
     return target
 
 @router.patch("/{id}", response_model=GigRead)
 def edit_gig(
-    id: int, 
+    id: uuid.UUID, 
     payload: GigUpdate,
     user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
@@ -86,11 +120,11 @@ def edit_gig(
         if key != "tag_ids":
             setattr(target, key, value)
             
-    if payload.skill_ids is not None:
+    if payload.tag_ids is not None:
         existing_links = db.exec(select(GigTagLink).where(GigTagLink.gig_id == id)).all()
         for old_link in existing_links:
             db.delete(old_link)
-        for next_id in payload.skill_ids:
+        for next_id in payload.tag_ids:
             db.add(GigTagLink(gig_id=id, tag_id=next_id))
             
     db.add(target)
@@ -100,7 +134,7 @@ def edit_gig(
 
 @router.patch("/{id}/status", response_model=GigRead)
 def update_gig_status(
-    id: int,
+    id: uuid.UUID,
     payload: GigStatusUpdate,
     user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
@@ -120,7 +154,7 @@ def update_gig_status(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_gig(
-    id: int,
+    id: uuid.UUID,
     user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db)
 ):

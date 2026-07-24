@@ -7,8 +7,9 @@ from typing import Optional, List
 from app.models import GigStatus
 
 from sqlmodel import Field, SQLModel
+from uuid import UUID
 
-from .models import AccountStatus
+from .models import AccountStatus, GigApprovalStatus
 
 
 # ---------- UserAccount ----------
@@ -43,7 +44,6 @@ class UserProfileCreate(SQLModel):
     last_name: str
     username: str
     dob: Optional[datetime] = None
-    user_id: uuid.UUID
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
     created_at: Optional[datetime] = None
@@ -162,6 +162,11 @@ class GigRead(GigBase):
     status: GigStatus
     created_at: datetime
     tags: List[TagRead] = []
+# Additional fields for admin review
+    approval_status: GigApprovalStatus
+    rejection_reason: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    reviewed_by_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True
