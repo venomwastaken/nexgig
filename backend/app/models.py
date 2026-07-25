@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
+from uuid import UUID
 
 from sqlalchemy import Column, ForeignKey, Numeric
 from sqlmodel import Field, Relationship, SQLModel
@@ -35,7 +38,7 @@ class BookingStatus(str, Enum):
 class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
 
-    user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     is_admin: bool = Field(default=False)
 
     # Synced/cached from Clerk
@@ -212,22 +215,22 @@ class Booking(SQLModel, table=True):
         sa_column=Column(
             ForeignKey("gig.gig_id", name="fk_booking_listing_id_gig"),
             nullable=False,
-        ),
-        index=True,
+            index=True,
+        )
     )
     client_id: uuid.UUID = Field(
         sa_column=Column(
             ForeignKey("user_account.user_id", name="fk_booking_client_id_user_account"),
             nullable=False,
-        ),
-        index=True,
+            index=True,
+        )
     )
     freelancer_id: uuid.UUID = Field(
         sa_column=Column(
             ForeignKey("user_account.user_id", name="fk_booking_freelancer_id_user_account"),
             nullable=False,
-        ),
-        index=True,
+            index=True,
+        )
     )
     status: BookingStatus = Field(default=BookingStatus.pending)
     message: Optional[str] = Field(default=None)
