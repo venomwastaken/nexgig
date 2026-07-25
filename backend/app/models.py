@@ -4,7 +4,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import Column, Numeric
+from sqlalchemy import Column, ForeignKey, Numeric
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -23,6 +23,13 @@ class AccountStatus(str, Enum):
     ACTIVE = "active"
     SUSPENDED = "suspended"
     DEACTIVATED = "deactivated"
+
+class BookingStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    declined = "declined"
+    completed = "completed"
+    cancelled = "cancelled"
 
 
 class UserAccount(SQLModel, table=True):
@@ -58,6 +65,14 @@ class UserAccount(SQLModel, table=True):
     reviews_received: List["UserReview"] = Relationship(
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
+    )
+    bookings_as_client: List["Booking"] = Relationship(
+        back_populates="client",
+        sa_relationship_kwargs={"foreign_keys": "Booking.client_id"},
+    )
+    bookings_as_freelancer: List["Booking"] = Relationship(
+        back_populates="freelancer",
+        sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
     )
 
 
@@ -188,3 +203,46 @@ class GigTagLink(SQLModel, table=True):
 
     gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
     tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)
+
+class Booking(SQLModel, table=True):
+    __tablename__ = "booking"
+
+    booking_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    listing_id: uuid.UUID = Field(
+        sa_column=Column(
+            ForeignKey("gig.gig_id", name="fk_booking_listing_id_gig"),
+            nullable=False,
+        ),
+        index=True,
+    )
+    client_id: uuid.UUID = Field(
+        sa_column=Column(
+            ForeignKey("user_account.user_id", name="fk_booking_client_id_user_account"),
+            nullable=False,
+        ),
+        index=True,
+    )
+    freelancer_id: uuid.UUID = Field(
+        sa_column=Column(
+            ForeignKey("user_account.user_id", name="fk_booking_freelancer_id_user_account"),
+            nullable=False,
+        ),
+        index=True,
+    )
+    status: BookingStatus = Field(default=BookingStatus.pending)
+    message: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+    listing: Optional["Gig"] = Relationship(
+        back_populates="bookings",
+        sa_relationship_kwargs={"foreign_keys": "Booking.listing_id"},
+    )
+    client: Optional["UserAccount"] = Relationship(
+        back_populates="bookings_as_client",
+        sa_relationship_kwargs={"foreign_keys": "Booking.client_id"},
+    )
+    freelancer: Optional["UserAccount"] = Relationship(
+        back_populates="bookings_as_freelancer",
+        sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
+    )
