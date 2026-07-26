@@ -1,20 +1,19 @@
-
-
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, List
-from app.models import GigStatus
-
-from sqlmodel import Field, SQLModel
+from enum import Enum
+from typing import List, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models import GigStatus
 
 from .models import AccountStatus, GigApprovalStatus
 
-
 # ---------- UserAccount ----------
 
-class UserAccountRead(SQLModel):
+class UserAccountRead(BaseModel):
     user_id: uuid.UUID
     email: str
     account_status: AccountStatus
@@ -22,13 +21,13 @@ class UserAccountRead(SQLModel):
     last_login: Optional[datetime] = None
 
 
-class UserAccountUpdate(SQLModel):
+class UserAccountUpdate(BaseModel):
     email: Optional[str] = None
 
 
 # ---------- UserWallet ----------
 
-class UserWalletRead(SQLModel):
+class UserWalletRead(BaseModel):
     wallet_id: uuid.UUID
     user_id: uuid.UUID
     available_tokens: Decimal
@@ -39,7 +38,7 @@ class UserWalletRead(SQLModel):
 
 # ---------- UserProfile ----------
 
-class UserProfileCreate(SQLModel):
+class UserProfileCreate(BaseModel):
     first_name: str
     last_name: str
     username: str
@@ -49,7 +48,7 @@ class UserProfileCreate(SQLModel):
     created_at: Optional[datetime] = None
 
 
-class UserProfileUpdate(SQLModel):
+class UserProfileUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = None
@@ -58,7 +57,7 @@ class UserProfileUpdate(SQLModel):
     updated_at: Optional[datetime] = None
 
 
-class UserProfileRead(SQLModel):
+class UserProfileRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     first_name: str
@@ -72,7 +71,7 @@ class UserProfileRead(SQLModel):
 
 # ---------- UserSkill ----------
 
-class UserSkillCreate(SQLModel):
+class UserSkillCreate(BaseModel):
     category: str
     skill_name: str
     description: Optional[str] = Field(default=None, max_length=1000)
@@ -80,7 +79,7 @@ class UserSkillCreate(SQLModel):
     is_active: bool = True
 
 
-class UserSkillUpdate(SQLModel):
+class UserSkillUpdate(BaseModel):
     category: Optional[str] = None
     skill_name: Optional[str] = None
     description: Optional[str] = Field(default=None, max_length=1000)
@@ -88,7 +87,7 @@ class UserSkillUpdate(SQLModel):
     is_active: Optional[bool] = None
 
 
-class UserSkillRead(SQLModel):
+class UserSkillRead(BaseModel):
     skill_id: uuid.UUID
     user_id: uuid.UUID
     category: str
@@ -100,14 +99,14 @@ class UserSkillRead(SQLModel):
 
 # ---------- UserReview ----------
 
-class UserReviewCreate(SQLModel):
+class UserReviewCreate(BaseModel):
     reviewee_id: uuid.UUID
     service_id: uuid.UUID
     rating: int = Field(ge=1, le=5)
     comment: Optional[str] = Field(default=None, max_length=2000)
 
 
-class UserReviewRead(SQLModel):
+class UserReviewRead(BaseModel):
     review_id: uuid.UUID
     reviewer_id: uuid.UUID
     reviewee_id: uuid.UUID
@@ -127,7 +126,7 @@ class UserAccountWithProfile(UserAccountRead):
 
 # ---------- Gigs ----------
 # Base properties shared across schemas
-class GigBase(SQLModel):
+class GigBase(BaseModel):
     title: str
     description: str
     price: float
@@ -138,7 +137,7 @@ class GigCreate(GigBase):
     category_id: Optional[uuid.UUID] = None
 
 # Schema for modifying mutable gig fields
-class GigUpdate(SQLModel):
+class GigUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
@@ -146,24 +145,22 @@ class GigUpdate(SQLModel):
     tag_ids: Optional[List[uuid.UUID]] = None
 
 # Schema for updating just the lifecycle state
-class GigStatusUpdate(SQLModel):
+class GigStatusUpdate(BaseModel):
     status: GigStatus
 
 # Nested simplified object to present related records cleanly
-class TagRead(SQLModel):
+class TagRead(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-class CategoryRead(SQLModel):
+class CategoryRead(BaseModel):
     category_id: uuid.UUID
     name: str
     description: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Publicly visible representation of a Gig
 class GigRead(GigBase):
@@ -181,4 +178,24 @@ class GigRead(GigBase):
 
     class Config:
         from_attributes = True
+
+# ---------- Enums ----------
+
+class AccountStatus(str, Enum):
+    active = "active"
+    suspended = "suspended"
+
+class AdminUser(BaseModel):
+    id: int
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    status: AccountStatus
+    is_admin: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UserStatusUpdate(BaseModel):
+    status: AccountStatus
 

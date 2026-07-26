@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -7,7 +5,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import Column, ForeignKey, Numeric
+from sqlalchemy import Column, ForeignKey, Numeric, String, Boolean
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -22,10 +20,10 @@ class GigApprovalStatus(str, Enum):
     REJECTED = "REJECTED"
 
 class AccountStatus(str, Enum):
-    PENDING_VERIFICATION = "pending_verification"
-    ACTIVE = "active"
-    SUSPENDED = "suspended"
-    DEACTIVATED = "deactivated"
+    active = "active"
+    suspended = "suspended"
+    deactivated = "deactivated"
+    pending_verification = "pending_verification"
 
 class BookingStatus(str, Enum):
     pending = "pending"
@@ -38,14 +36,14 @@ class BookingStatus(str, Enum):
 class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
 
-    user_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     is_admin: bool = Field(default=False)
 
     # Synced/cached from Clerk
     email: str = Field(unique=True, index=True, nullable=False) 
 
     university_id: Optional[uuid.UUID] = Field(default=None)
-    account_status: AccountStatus = Field(default=AccountStatus.PENDING_VERIFICATION)
+    account_status: AccountStatus = Field(default=AccountStatus.active, nullable=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
     clerk_id: str = Field(unique=True, index=True, nullable=False)
@@ -82,7 +80,7 @@ class UserAccount(SQLModel, table=True):
 class UserWallet(SQLModel, table=True):
     __tablename__ = "user_wallet"
 
-    wallet_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    wallet_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     available_tokens: Decimal = Field(
         default=Decimal("0"), sa_column=Column(Numeric(12, 2), nullable=False)
@@ -99,7 +97,7 @@ class UserWallet(SQLModel, table=True):
 class UserProfile(SQLModel, table=True):
     __tablename__ = "user_profile"
 
-    profile_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    profile_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     first_name: str
     last_name: str
@@ -117,7 +115,7 @@ class UserProfile(SQLModel, table=True):
 class Skill(SQLModel, table=True):
     __tablename__ = "skill"
 
-    skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     name: str = Field(unique=True, index=True)
 
 
@@ -132,7 +130,7 @@ class UserSkillLink(SQLModel, table=True):
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
 
-    review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     reviewer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     reviewee_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     service_id: uuid.UUID  
@@ -158,7 +156,7 @@ class Gig(SQLModel, table=True):
     reviewed_at: Optional[datetime] = Field(default=None)
     rejection_reason: Optional[str] = Field(default=None, max_length=500)
     
-    gig_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     title: str
     description: str
     price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
@@ -171,6 +169,10 @@ class Gig(SQLModel, table=True):
     user: Optional["UserAccount"] = Relationship(
         back_populates="gigs",
         sa_relationship_kwargs={"foreign_keys": "Gig.user_id"},
+    )
+    bookings: List["Booking"] = Relationship(
+        back_populates="listing",
+        sa_relationship_kwargs={"foreign_keys": "Booking.listing_id"},
     )
 
     @property
@@ -185,7 +187,7 @@ class Gig(SQLModel, table=True):
 class Category(SQLModel, table=True):
     __tablename__ = "category"
 
-    category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     name: str = Field(unique=True, index=True)
     description: Optional[str] = Field(default=None)
 
@@ -210,7 +212,7 @@ class GigTagLink(SQLModel, table=True):
 class Booking(SQLModel, table=True):
     __tablename__ = "booking"
 
-    booking_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    booking_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     listing_id: uuid.UUID = Field(
         sa_column=Column(
             ForeignKey("gig.gig_id", name="fk_booking_listing_id_gig"),
