@@ -68,7 +68,7 @@ function SignUpPageContent() {
                 throw new Error(error.message);
             }
 
-            navigate('/')
+            navigate('/onboarding/profile')
         } catch (err) {
             setError(
                 err instanceof Error

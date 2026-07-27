@@ -19,7 +19,7 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              to="/auth/signup"
+              to="/signup"
               className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-6 py-3 font-medium hover:bg-primary-hover transition-colors"
             >
               Create your account <ArrowRight size={18} />
@@ -74,7 +74,7 @@ export default function Home() {
               </p>
             </div>
             <Link
-              to="/auth/signup"
+              to="/signup"
               className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-6 py-3 font-medium hover:bg-primary-hover transition-colors shrink-0"
             >
               Join NexGig <ArrowRight size={18} />
