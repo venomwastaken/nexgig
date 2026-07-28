@@ -91,6 +91,7 @@ class UserProfile(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     bio: Optional[str] = Field(default=None)
+    university: Optional[str] = Field(default=None)
 
     user: "UserAccount" = Relationship(back_populates="profile")
     skill_links: List["UserSkillLink"] = Relationship(back_populates="profile")
@@ -149,6 +150,7 @@ class Gig(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     category_id: Optional[uuid.UUID] = Field(default=None, foreign_key="category.category_id", index=True)
+    turnaround_time: Optional[str] = Field(default=None, max_length=100)
 
     user: Optional["UserAccount"] = Relationship(
         back_populates="gigs",
