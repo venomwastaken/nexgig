@@ -3,6 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ArrowRight } from "lucide-react";
 import {
     Field,
     FieldLabel,
@@ -10,17 +11,9 @@ import {
     FieldError,
     FieldGroup,
 } from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import Button from "@/pages/ui/Button";
 import { useApi } from "@/hooks/useApi";
 import axios from "axios";
 
@@ -30,14 +23,32 @@ import {
     InputGroupInput,
     InputGroupText,
 } from "@/components/ui/input-group";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "./ui/combobox";
+import { KeyboardEvent, useState } from 'react';
+import { cn } from "@/lib/utils";
+
+// Matches the underline field treatment from TextField/PasswordField on the
+// login and signup pages, applied here to shadcn's Input/Textarea.
+const labelClass =
+    "font-mono text-[11px] font-normal uppercase tracking-widest text-[#8B8F9B] group-focus-within/field:text-[#1b976f]";
+const fieldBorderClass = "border-[#2A2E38] bg-transparent";
+const inputClass = `border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-[#1b976f] text-[#ffffff] placeholder:text-[#4A4E58] ${fieldBorderClass}`;
 
 // Updated Schema to handle inputs arriving from standard web forms
 const formSchema = z.object({
     title: z.string().min(2, "Title is required"),
-    description: z.string().min(20, "Provide a description"),
+    category: z.string().min(2, "Title is required"),
+    description: z.string().min(20, "Provide a description longer than 20 characters"),
     // Using preprocess explicitly tells TypeScript what to expect, avoiding the 'unknown' error
     price: z.coerce.number().min(0.01, "Price must be greater than 0"),
-    tags: z.string().min(1, "Add at least one tag"),
+    tags: z.array(z.string()).min(1, "Add at least one tag"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -45,8 +56,34 @@ type FormValues = z.infer<typeof formSchema>;
 export default function GigForm() {
     const form = useForm<FormValues, unknown, FormValues>({
         resolver: zodResolver(formSchema) as any,
-        defaultValues: { title: "", description: "", price: 0, tags: "" },
+        defaultValues: {
+            title: "",
+            description: "",
+            category: "",
+            price: 0,
+            tags: [],
+        },
     });
+
+    type Category = {
+        label: string;
+        value: string;
+    };
+
+    const categorys: Category[] = [
+        { label: "Tutoring & Lessons", value: "tutoring" },
+        { label: "Design & Creative", value: "design" },
+        { label: "Writing & Editing", value: "writing" },
+        { label: "Tech & Programming", value: "tech" },
+        { label: "Photography & Video", value: "photo-video" },
+        { label: "Music & Audio", value: "music" },
+        { label: "Errands & Delivery", value: "errands" },
+        { label: "Event Help", value: "events" },
+        { label: "Fitness & Sports Coaching", value: "fitness" },
+        { label: "Beauty & Grooming", value: "beauty" },
+        { label: "Moving & Labor", value: "moving" },
+        { label: "Other", value: "other" },
+    ];
 
     const api = useApi();
 
@@ -54,15 +91,12 @@ export default function GigForm() {
         try {
             const finalPayload = {
                 ...data,
-                tags: data.tags
-                    .split(",")
-                    .map((t) => t.trim())
-                    .filter(Boolean),
+                tags: data.tags.map((t) => t.trim()).filter(Boolean),
             };
 
             console.log("Transformed payload for API:", finalPayload);
-            const res  = await api.post("/gigs", finalPayload);
-            
+            const res = await api.post("/gigs", finalPayload);
+
             toast.success("Gig updated successfully!");
         } catch (error) {
             console.error("Form submission error", error);
@@ -77,133 +111,281 @@ export default function GigForm() {
     }
 
     return (
-        <Card className="w-full max-w-3xl mx-auto my-10">
-            <CardHeader>
-                <CardTitle>Create A Gig</CardTitle>
-                <CardDescription>What is this gig about.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-8"
-                    id="profile-form"
-                >
-                    <FieldGroup>
-                        <Controller
-                            name="title"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="title">
-                                        Title
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="title"
-                                        aria-invalid={fieldState.invalid}
-                                        placeholder="Face Painting For Adults"
-                                    />
-                                    {fieldState.error && (
-                                        <FieldError>
-                                            {fieldState.error.message}
-                                        </FieldError>
-                                    )}
-                                </Field>
-                            )}
-                        />
+        <div className="card-surface w-full max-w-2xl mx-auto my-10 px-8 py-10">
+            <h1
+                className="text-3xl font-semibold tracking-tight text-[#ffffff]"
+                style={{
+                    fontFamily: "'Space Grotesk', ui-sans-serif, system-ui",
+                }}
+            >
+                Create a gig
+            </h1>
+            <p className="mt-2 text-sm text-[#8B8F9B]">
+                Tell buyers what you're offering.
+            </p>
 
-                        <Controller
-                            name="description"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="description">
-                                        Description
-                                    </FieldLabel>
-                                    <Textarea
-                                        {...field}
-                                        id="description"
-                                        aria-invalid={fieldState.invalid}
-                                        placeholder="I will professionally paint your face. A cat? A dog? Transformers? Hit me up"
-                                        className="min-h-30"
-                                    />
-                                    {fieldState.error && (
-                                        <FieldError>
-                                            {fieldState.error.message}
-                                        </FieldError>
-                                    )}
-                                </Field>
-                            )}
-                        />
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="mt-8 space-y-6"
+                id="gig-form"
+            >
+                <FieldGroup>
+                    <Controller
+                        name="title"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                    htmlFor="title"
+                                    className={labelClass}
+                                >
+                                    Title
+                                </FieldLabel>
+                                <Input
+                                    {...field}
+                                    id="title"
+                                    aria-invalid={fieldState.invalid}
+                                    placeholder="Face Painting For Adults"
+                                    className={inputClass}
+                                />
+                                {fieldState.error && (
+                                    <FieldError>
+                                        {fieldState.error.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
 
-                        <Controller
-                            name="price"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
+                    <Controller
+                        name="category"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                    htmlFor="category"
+                                    className={labelClass}
+                                >
+                                    Category
+                                </FieldLabel>
+                                <Combobox
+                                    items={categorys}
+                                    value={categorys.find(
+                                        (category) =>
+                                            category.value === field.value,
+                                    )}
+                                    onValueChange={(category) =>
+                                        field.onChange(
+                                            category?.value ?? "",
+                                        )
+                                    }
+                                >
+                                    <ComboboxInput
+                                        placeholder="Select a category"
+                                        className={fieldBorderClass}
+                                    />
+                                    <ComboboxContent>
+                                        <ComboboxEmpty>
+                                            No items found.
+                                        </ComboboxEmpty>
+                                        <ComboboxList>
+                                            {(category) => (
+                                                <ComboboxItem
+                                                    key={category.value}
+                                                    value={category}
+                                                >
+                                                    {category.label}
+                                                </ComboboxItem>
+                                            )}
+                                        </ComboboxList>
+                                    </ComboboxContent>
+                                </Combobox>
+                                {fieldState.error && (
+                                    <FieldError>
+                                        {fieldState.error.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    <Controller
+                        name="description"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                    htmlFor="description"
+                                    className={labelClass}
+                                >
+                                    Description
+                                </FieldLabel>
+                                <Textarea
+                                    {...field}
+                                    id="description"
+                                    aria-invalid={fieldState.invalid}
+                                    placeholder="I will professionally paint your face. A cat? A dog? Transformers? Hit me up"
+                                    className={`min-h-30 ${inputClass}`}
+                                />
+                                {fieldState.error && (
+                                    <FieldError>
+                                        {fieldState.error.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    <Controller
+                        name="price"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                    htmlFor="price"
+                                    className={labelClass}
+                                >
+                                    Price
+                                </FieldLabel>
+                                <InputGroup className={fieldBorderClass}>
+                                    <InputGroupAddon>
+                                        <InputGroupText>₵</InputGroupText>
+                                    </InputGroupAddon>
+                                    <InputGroupInput
+                                        {...field}
+                                        type="number"
+                                        step="0.01"
+                                        id="price"
+                                        aria-invalid={fieldState.invalid}
+                                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <InputGroupAddon align="inline-end">
+                                        <InputGroupText>GHS</InputGroupText>
+                                    </InputGroupAddon>
+                                </InputGroup>
+                                {fieldState.error && (
+                                    <FieldError>
+                                        {fieldState.error.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    <Controller
+                        name="tags"
+                        control={form.control}
+                        render={({ field, fieldState }) => {
+                            const tags = field.value ?? [];
+
+                            const [inputValue, setInputValue] = useState("");
+
+                            // Handle adding a tag on Comma or Enter
+                            const handleKeyDown = (
+                                e: KeyboardEvent<HTMLInputElement>,
+                            ) => {
+                                if (e.key === "," || e.key === "Enter") {
+                                    e.preventDefault();
+                                    const newTag = inputValue
+                                        .trim()
+                                        .replace(/,$/, ""); // remove trailing comma
+
+                                    if (
+                                        newTag &&
+                                        !tags.includes(newTag)
+                                    ) {
+                                        field.onChange([...tags, newTag]);
+                                    }
+                                    setInputValue("");
+                                }
+                            };
+
+                            const removeTag = (tagToRemove: string) => {
+                                field.onChange(
+                                    tags.filter(
+                                        (tag) => tag !== tagToRemove,
+                                    ),
+                                );
+                            };
+
+                            return (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="price">
-                                        Price
+                                    <FieldLabel
+                                        htmlFor="tags-input"
+                                        className={labelClass}
+                                    >
+                                        Tags
                                     </FieldLabel>
-                                    <InputGroup>
-                                        <InputGroupAddon>
-                                            <InputGroupText>₵</InputGroupText>
-                                        </InputGroupAddon>
-                                        <InputGroupInput
-                                            {...field}
-                                            type="number"
-                                            step="0.01"
-                                            id="price"
+
+                                    {/* Visual container mimicking the underline input treatment */}
+                                    <div
+                                        className={cn(
+                                            inputClass,
+                                            "flex min-h-10.5 flex-wrap items-center gap-2 p-2 focus-within:border-[#1b976f]",
+                                        )}
+                                    >
+                                        {tags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="flex items-center gap-1 rounded-full border border-[#2A2E38] bg-[#232323] py-1 pr-1 pl-2.5 text-sm text-[#ffffff]"
+                                            >
+                                                {tag}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeTag(tag)
+                                                    }
+                                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[#8B8F9B] transition-colors hover:bg-[#2f2f2f] hover:text-[#ffffff]"
+                                                    aria-label={`Remove ${tag}`}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+
+                                        <input
+                                            id="tags-input"
+                                            type="text"
+                                            value={inputValue}
+                                            onChange={(e) =>
+                                                setInputValue(e.target.value)
+                                            }
+                                            onKeyDown={handleKeyDown}
                                             aria-invalid={fieldState.invalid}
+                                            placeholder={
+                                                tags.length === 0
+                                                    ? "design, entertainment, party"
+                                                    : ""
+                                            }
+                                            className="min-w-30 flex-1 border-none bg-transparent p-0 text-sm text-[#ffffff] placeholder:text-[#4A4E58] outline-none focus:ring-0"
                                         />
-                                        <InputGroupAddon align="inline-end">
-                                            <InputGroupText>GHS</InputGroupText>
-                                        </InputGroupAddon>
-                                    </InputGroup>
-                                    {fieldState.error && (
-                                        <FieldError>
-                                            {fieldState.error.message}
-                                        </FieldError>
-                                    )}
-                                </Field>
-                            )}
-                        />
+                                    </div>
 
-                        <Controller
-                            name="tags"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="tags">Tags</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="tags"
-                                        aria-invalid={fieldState.invalid}
-                                        placeholder="design, entertainment, party"
-                                    />
                                     <FieldDescription>
-                                        Separate tags with commas.
+                                        Press enter or comma to add a tag.
                                     </FieldDescription>
+
                                     {fieldState.error && (
                                         <FieldError>
                                             {fieldState.error.message}
                                         </FieldError>
                                     )}
                                 </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                </form>
-            </CardContent>
-            <CardFooter>
+                            );
+                        }}
+                    />
+                </FieldGroup>
+
                 <Button
                     type="submit"
-                    form="profile-form"
-                    className="w-full sm:w-auto"
-                    disabled={form.formState.isSubmitting}
+                    form="gig-form"
+                    isLoading={form.formState.isSubmitting}
+                    loadingText="Submitting"
                 >
                     Submit
+                    <ArrowRight size={16} />
                 </Button>
-            </CardFooter>
-        </Card>
+            </form>
+        </div>
     );
 }
