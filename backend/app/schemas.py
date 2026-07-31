@@ -165,10 +165,20 @@ class CategoryRead(SQLModel):
     class Config:
         from_attributes = True
 
+class ProviderRead(SQLModel):
+    user_id: uuid.UUID
+    first_name: str
+    last_name: str
+    username: str
+    avatar_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # Publicly visible representation of a Gig
 class GigRead(GigBase):
     id: uuid.UUID
-    provider_id: uuid.UUID
+    provider: Optional[ProviderRead] = None
     status: GigStatus
     created_at: datetime
     tags: List[TagRead] = []
