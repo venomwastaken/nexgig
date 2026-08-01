@@ -68,6 +68,16 @@ export default function Navbar() {
                         >
                             Post a gig
                         </Link>
+                        <Link
+                            to="/account"
+                            className={`text-sm transition-colors ${
+                                isActive("/account")
+                                    ? "text-[#ffffff]"
+                                    : "text-[#8B8F9B] hover:text-[#ffffff]"
+                            }`}
+                        >
+                            Account
+                        </Link>
                         <UserButton />
                     </Show>
                 </div>
@@ -132,6 +142,13 @@ export default function Navbar() {
                                 className="rounded-md bg-[#1b976f] px-4 py-2.5 text-center text-sm font-medium text-[#0B0B0B]"
                             >
                                 Post a gig
+                            </Link>
+                            <Link
+                                to="/account"
+                                onClick={() => setMobileOpen(false)}
+                                className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
+                            >
+                                Account
                             </Link>
                             <div className="flex justify-center pt-1">
                                 <UserButton />

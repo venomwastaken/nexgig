@@ -3,13 +3,20 @@ import Home from './pages/home';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignupPage';
 import ProfileFormPage from './pages/profileFormPage';
+import AccountPage from './pages/AccountPage';
 import CreateGig from './pages/CreateGig';
 import Layout from './components/Layout';
 import RequireAuth from '@/components/RequireAuth';
+import { Toaster } from '@/components/ui/sonner';
+import Gigs from './pages/Gigs';
+import GigView from './pages/GigView';
 
 export default function App() {
     return (
         <BrowserRouter>
+            {/* sonner's toast() calls (used across profile/account forms) render
+                through this — without it mounted, toasts fire silently. */}
+            <Toaster />
             <Routes>
                 {/* Auth pages render full-screen via AuthCard, no navbar */}
                 <Route path="/login" element={<LoginPage />} />
@@ -18,6 +25,8 @@ export default function App() {
                 {/* Everything else shares the Navbar/Footer via Layout's <Outlet /> */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/gigs" element={<Gigs />} />
+                    <Route path="/gigs/:id" element={<GigView />} />
 
                     {/* Requires a signed-in user; redirects to /login otherwise */}
                     <Route
@@ -33,6 +42,14 @@ export default function App() {
                         element={
                             <RequireAuth>
                                 <CreateGig />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/account"
+                        element={
+                            <RequireAuth>
+                                <AccountPage />
                             </RequireAuth>
                         }
                     />
