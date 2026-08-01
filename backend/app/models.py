@@ -150,6 +150,7 @@ class Gig(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     category_id: Optional[uuid.UUID] = Field(default=None, foreign_key="category.category_id", index=True)
+    banner_url: Optional[str] = Field(default=None)
     turnaround_time: Optional[str] = Field(default=None, max_length=100)
 
     user: Optional["UserAccount"] = Relationship(

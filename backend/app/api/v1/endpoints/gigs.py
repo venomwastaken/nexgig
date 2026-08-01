@@ -7,7 +7,6 @@ from typing import Annotated, List, Optional
 from app.models import Category, Gig, GigApprovalStatus, GigStatus, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
 from app.core.database import get_db
 from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
-# Assuming your auth dependency is located in your root auth or clerk_auth file
 from app.api.v1.endpoints.users import get_or_create_user
 
 
@@ -37,7 +36,9 @@ def create_gig(
         price=payload.price,
         user_id=user.user_id,
         category_id=payload.category_id,
-        approval_status=GigApprovalStatus.PENDING
+        approval_status=GigApprovalStatus.PENDING,
+        banner_url=payload.banner_url,
+        turnaround_time=payload.turnaround_time
     )
     db.add(new_gig)
     db.flush()
@@ -129,21 +130,27 @@ def edit_gig(
     if target.user_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to edit this gig")
 
+    # Extract only the fields sent in the request body
     data = payload.model_dump(exclude_unset=True)
 
+    # Handle category validation if category_id was updated
     if "category_id" in data and data["category_id"] is not None:
         category = db.get(Category, data["category_id"])
         if not category:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category_id")
 
+    # Dynamically apply updates to Gig (including banner_url and turnaround_time)
     for key, value in data.items():
         if key != "tag_ids":
             setattr(target, key, value)
 
+    # Handle tag relations separately if provided
     if payload.tag_ids is not None:
+        # Delete existing tag links
         existing_links = db.exec(select(GigTagLink).where(GigTagLink.gig_id == id)).all()
         for old_link in existing_links:
             db.delete(old_link)
+        # Add new tag links
         for next_id in payload.tag_ids:
             db.add(GigTagLink(gig_id=id, tag_id=next_id))
 
