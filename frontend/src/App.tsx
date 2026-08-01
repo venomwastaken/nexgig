@@ -10,6 +10,7 @@ import RequireAuth from '@/components/RequireAuth';
 import { Toaster } from '@/components/ui/sonner';
 import Gigs from './pages/Gigs';
 import GigView from './pages/GigView';
+import Messages from './pages/Messages';
 
 export default function App() {
     return (
@@ -50,6 +51,14 @@ export default function App() {
                         element={
                             <RequireAuth>
                                 <AccountPage />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/messages/:conversationId?"
+                        element={
+                            <RequireAuth>
+                                <Messages />
                             </RequireAuth>
                         }
                     />

@@ -69,6 +69,16 @@ export default function Navbar() {
                             Post a gig
                         </Link>
                         <Link
+                            to="/messages"
+                            className={`text-sm transition-colors ${
+                                isActive("/messages")
+                                    ? "text-[#ffffff]"
+                                    : "text-[#8B8F9B] hover:text-[#ffffff]"
+                            }`}
+                        >
+                            Messages
+                        </Link>
+                        <Link
                             to="/account"
                             className={`text-sm transition-colors ${
                                 isActive("/account")
@@ -142,6 +152,13 @@ export default function Navbar() {
                                 className="rounded-md bg-[#1b976f] px-4 py-2.5 text-center text-sm font-medium text-[#0B0B0B]"
                             >
                                 Post a gig
+                            </Link>
+                            <Link
+                                to="/messages"
+                                onClick={() => setMobileOpen(false)}
+                                className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
+                            >
+                                Messages
                             </Link>
                             <Link
                                 to="/account"

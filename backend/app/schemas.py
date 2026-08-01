@@ -192,3 +192,41 @@ class GigRead(GigBase):
     class Config:
         from_attributes = True
 
+
+# ---------- Messaging ----------
+
+class ConversationCreate(SQLModel):
+    other_user_id: uuid.UUID
+    gig_id: Optional[uuid.UUID] = None
+
+
+class ConversationRead(SQLModel):
+    id: uuid.UUID
+    other_participant: ProviderRead
+    gig_id: Optional[uuid.UUID] = None
+    last_message_at: Optional[datetime] = None
+    last_message_preview: Optional[str] = None
+    unread_count: int = 0
+    created_at: datetime
+
+
+class MessageRead(SQLModel):
+    id: uuid.UUID
+    conversation_id: uuid.UUID
+    sender_id: uuid.UUID
+    body: Optional[str] = None
+    attachment_url: Optional[str] = None
+    attachment_type: Optional[str] = None
+    created_at: datetime
+
+
+class AttachmentPresignRequest(SQLModel):
+    filename: str
+    content_type: str
+
+
+class AttachmentPresignResponse(SQLModel):
+    upload_url: str
+    object_url: str
+    object_key: str
+

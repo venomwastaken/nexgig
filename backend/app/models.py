@@ -190,3 +190,31 @@ class GigTagLink(SQLModel, table=True):
 
     gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
     tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)
+
+
+class Conversation(SQLModel, table=True):
+    __tablename__ = "conversation"
+
+    conversation_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    # Normalized unordered pair: user_a_id is always the smaller UUID (via uuid.UUID's
+    # built-in comparison), so UNIQUE(user_a_id, user_b_id) guarantees exactly one
+    # conversation per participant pair regardless of who messages first.
+    user_a_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    user_b_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    gig_id: Optional[uuid.UUID] = Field(default=None, foreign_key="gig.gig_id", index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    last_message_at: Optional[datetime] = Field(default=None, index=True)
+    user_a_last_read_at: Optional[datetime] = Field(default=None)
+    user_b_last_read_at: Optional[datetime] = Field(default=None)
+
+
+class Message(SQLModel, table=True):
+    __tablename__ = "message"
+
+    message_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    conversation_id: uuid.UUID = Field(foreign_key="conversation.conversation_id", index=True)
+    sender_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    body: Optional[str] = Field(default=None, max_length=4000)
+    attachment_url: Optional[str] = Field(default=None, max_length=2048)
+    attachment_type: Optional[str] = Field(default=None, max_length=100)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)

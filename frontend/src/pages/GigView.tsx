@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GIGS } from "@/lib/gigs";
 import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
+import { useApi } from "@/hooks/useApi";
 import {
     ArrowLeft,
     Clock,
@@ -13,7 +14,7 @@ import {
     ShieldCheck,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 function timeAgo(iso: string) {
@@ -181,6 +182,24 @@ function GigDetails({ gig }: { gig: (typeof GIGS)[number] }) {
 function BookingPanel({ gig }: { gig: (typeof GIGS)[number] }) {
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [messaging, setMessaging] = useState(false);
+    const api = useApi();
+    const navigate = useNavigate();
+
+    async function handleMessageProvider() {
+        setMessaging(true);
+        try {
+            const { data } = await api.post("/messaging/conversations", {
+                other_user_id: gig.provider.user_id,
+                gig_id: gig.id,
+            });
+            navigate(`/messages/${data.id}`);
+        } catch {
+            toast.error("Couldn't start a conversation. Please try again.");
+        } finally {
+            setMessaging(false);
+        }
+    }
 
     async function handleBook() {
         setSubmitting(true);
@@ -229,13 +248,15 @@ function BookingPanel({ gig }: { gig: (typeof GIGS)[number] }) {
                 Book this gig
             </Button>
 
-            <a
-                href={`mailto:?subject=${encodeURIComponent(gig.title)}`}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-border py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            <button
+                type="button"
+                onClick={handleMessageProvider}
+                disabled={messaging}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-border py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
                 <MessageCircle size={16} />
-                Message provider
-            </a>
+                {messaging ? "Starting conversation..." : "Message provider"}
+            </button>
 
             <p className="text-xs text-muted-foreground text-center">
                 You won't be charged until the provider accepts your request.
