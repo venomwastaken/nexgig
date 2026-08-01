@@ -1,9 +1,9 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { ArrowRight } from "lucide-react";
-import TextField from "./ui/TextField";
-import PasswordField from "./ui/PasswordField";
-import Button from "./ui/Button";
-import AuthCard from "./ui/AuthCard";
+import TextField from "./components/ui/TextField";
+import PasswordField from "./components/ui/PasswordField";
+import Button from "./components/ui/Button";
+import AuthCard from "./components/ui/AuthCard";
 
 interface SignUpFormState {
   fullName: string;
@@ -21,6 +21,7 @@ interface SignUpPageProps {
 
 const initialState: SignUpFormState = {
   fullName: "",
+  userName: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -84,9 +85,9 @@ export default function SignUpPage({ onSubmit, onNavigateToLogin }: SignUpPagePr
   return (
     <AuthCard>
       <div className="mb-10 text-2xl tracking-tight" style={{ fontFamily: "'Syne', ui-sans-serif, system-ui", fontWeight: 700 }}>
-  <span className="text-[#ffffff]">Nex</span>
-  <span className="text-[#1b976f]">Gig</span>
-</div>
+        <span className="text-[#ffffff]">Nex</span>
+        <span className="text-[#1b976f]">Gig</span>
+      </div>
 
       <h1 className="text-3xl font-semibold tracking-tight text-[#ffffff]" style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui" }}>
         Create your account.
@@ -112,8 +113,8 @@ export default function SignUpPage({ onSubmit, onNavigateToLogin }: SignUpPagePr
           onChange={handleChange}
           placeholder="Enter your Full Name"
         />
-    
-         <TextField
+
+        <TextField
           id="userName"
           name="userName"
           type="text"
@@ -121,8 +122,8 @@ export default function SignUpPage({ onSubmit, onNavigateToLogin }: SignUpPagePr
           autoComplete="name"
           value={form.userName}
           onChange={handleChange}
-          placeholder="Enter your username"/>
-        
+          placeholder="Enter your username" />
+
         <TextField
           id="email"
           name="email"

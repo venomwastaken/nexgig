@@ -1,9 +1,9 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { ArrowRight } from "lucide-react";
-import TextField from "./ui/TextField";
-import PasswordField from "./ui/PasswordField";
-import Button from "./ui/Button";
-import AuthCard from "./ui/AuthCard";
+import TextField from "./components/ui/TextField";
+import PasswordField from "./components/ui/PasswordField";
+import Button from "./components/ui/Button";
+import AuthCard from "./components/ui/AuthCard";
 
 interface LoginFormState {
   email: string;
@@ -66,10 +66,10 @@ export default function LoginPage({ onSubmit, onNavigateToSignUp }: LoginPagePro
 
   return (
     <AuthCard>
-  <div className="mb-10 text-2xl tracking-tight" style={{ fontFamily: "'Syne', ui-sans-serif, system-ui", fontWeight: 700 }}>
-  <span className="text-[#ffffff]">Nex</span>
-  <span className="text-[#1b976f]">Gig</span>
-</div>
+      <div className="mb-10 text-2xl tracking-tight" style={{ fontFamily: "'Syne', ui-sans-serif, system-ui", fontWeight: 700 }}>
+        <span className="text-[#ffffff]">Nex</span>
+        <span className="text-[#1b976f]">Gig</span>
+      </div>
 
       <h1 className="text-3xl font-semibold tracking-tight text-[#ffffff]" style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui" }}>
         Sign in to keep building.
@@ -93,7 +93,7 @@ export default function LoginPage({ onSubmit, onNavigateToSignUp }: LoginPagePro
           autoComplete="email"
           value={form.email}
           onChange={handleChange}
-          placeholder="you@knust.edu.gh"
+          placeholder="Enter your email address"
         />
 
         <PasswordField
