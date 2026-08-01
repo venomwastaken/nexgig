@@ -187,7 +187,7 @@ function CategoryScroller({
     );
 }
 
-function GigCard({ gig }: { gig: Gig }) {
+export function GigCard({ gig }: { gig: Gig }) {
     const [liked, setLiked] = useState(false);
 
     return (

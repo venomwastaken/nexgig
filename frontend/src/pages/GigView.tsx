@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Badge from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/textarea";
 import { GIGS } from "@/lib/gigs";
+import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
 import {
     ArrowLeft,
@@ -11,7 +12,7 @@ import {
     MessageCircle,
     ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -28,6 +29,16 @@ function timeAgo(iso: string) {
 export default function GigView() {
     const { id } = useParams<{ id: string }>();
     const gig = GIGS.find((g) => g.id === id);
+
+    const similarGigs = useMemo(() => {
+        if (!gig) return [];
+        const sameCategory = GIGS.filter(
+            (g) => g.id !== gig.id && g.category === gig.category,
+        );
+        if (sameCategory.length > 0) return sameCategory.slice(0, 3);
+        // Fall back to other gigs so the section still has something to show.
+        return GIGS.filter((g) => g.id !== gig.id).slice(0, 3);
+    }, [gig]);
 
     if (!gig) {
         return (
@@ -69,6 +80,19 @@ export default function GigView() {
                         <BookingPanel gig={gig} />
                     </div>
                 </div>
+
+                {similarGigs.length > 0 && (
+                    <div className="mt-16">
+                        <h2 className="text-xl font-semibold tracking-tight">
+                            Similar gigs
+                        </h2>
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {similarGigs.map((g) => (
+                                <GigCard key={g.id} gig={g} />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
