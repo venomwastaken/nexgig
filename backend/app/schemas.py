@@ -131,6 +131,7 @@ class GigBase(SQLModel):
     title: str
     description: str
     price: float
+    banner_url: Optional[str] = None
 
 # Schema for creating a gig
 class GigCreate(GigBase):
@@ -144,6 +145,7 @@ class GigUpdate(SQLModel):
     price: Optional[float] = None
     category_id: Optional[uuid.UUID] = None
     tag_ids: Optional[List[uuid.UUID]] = None
+    banner_url: Optional[str] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(SQLModel):
@@ -158,9 +160,7 @@ class TagRead(SQLModel):
         from_attributes = True
 
 class CategoryRead(SQLModel):
-    category_id: uuid.UUID
     name: str
-    description: Optional[str] = None
 
     class Config:
         from_attributes = True
