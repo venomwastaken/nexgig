@@ -26,11 +26,10 @@ def get_session() -> Generator[Session, None, None]:
 
 
 # --- user creation ---
-def get_or_create_user(
-    #clerk_id: str = Depends(clerk_id_from_token),
-    payload: dict = Depends(verify_clerk_token),
-    db: Session = Depends(get_session),
-) -> UserAccount:
+def get_or_create_user_from_payload(payload: dict, db: Session) -> UserAccount:
+    """Core of get_or_create_user, usable by callers that can't rely on FastAPI's
+    Depends() chain (e.g. a WebSocket route, which verifies its own `?token=` query
+    param before accept() rather than via the HTTPBearer dependency)."""
     clerk_id = payload["sub"]
     email = payload.get("email")
 
@@ -40,7 +39,7 @@ def get_or_create_user(
     user = db.exec(select(UserAccount).where(UserAccount.clerk_id == clerk_id)).first()
     if user:
         return user
- 
+
     user = UserAccount(clerk_id=clerk_id, email=email)
     db.add(user)
     try:
@@ -53,8 +52,16 @@ def get_or_create_user(
             raise
     else:
         db.refresh(user)
- 
+
     return user
+
+
+def get_or_create_user(
+    #clerk_id: str = Depends(clerk_id_from_token),
+    payload: dict = Depends(verify_clerk_token),
+    db: Session = Depends(get_session),
+) -> UserAccount:
+    return get_or_create_user_from_payload(payload, db)
 
 @router.get("/me/account", response_model=UserAccountRead)
 def read_me(user: UserAccount = Depends(get_or_create_user)):

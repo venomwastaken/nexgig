@@ -31,8 +31,9 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "./ui/combobox";
-import { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent, useState } from "react";
 import { cn } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/gigs";
 
 // Matches the underline field treatment from TextField/PasswordField on the
 // login and signup pages, applied here to shadcn's Input/Textarea.
@@ -45,7 +46,9 @@ const inputClass = `border-0 border-b rounded-none px-0 shadow-none focus-visibl
 const formSchema = z.object({
     title: z.string().min(2, "Title is required"),
     category: z.string().min(2, "Title is required"),
-    description: z.string().min(20, "Provide a description longer than 20 characters"),
+    description: z
+        .string()
+        .min(20, "Provide a description longer than 20 characters"),
     // Using preprocess explicitly tells TypeScript what to expect, avoiding the 'unknown' error
     price: z.coerce.number().min(0.01, "Price must be greater than 0"),
     tags: z.array(z.string()).min(1, "Add at least one tag"),
@@ -64,26 +67,6 @@ export default function GigForm() {
             tags: [],
         },
     });
-
-    type Category = {
-        label: string;
-        value: string;
-    };
-
-    const categorys: Category[] = [
-        { label: "Tutoring & Lessons", value: "tutoring" },
-        { label: "Design & Creative", value: "design" },
-        { label: "Writing & Editing", value: "writing" },
-        { label: "Tech & Programming", value: "tech" },
-        { label: "Photography & Video", value: "photo-video" },
-        { label: "Music & Audio", value: "music" },
-        { label: "Errands & Delivery", value: "errands" },
-        { label: "Event Help", value: "events" },
-        { label: "Fitness & Sports Coaching", value: "fitness" },
-        { label: "Beauty & Grooming", value: "beauty" },
-        { label: "Moving & Labor", value: "moving" },
-        { label: "Other", value: "other" },
-    ];
 
     const api = useApi();
 
@@ -169,15 +152,13 @@ export default function GigForm() {
                                     Category
                                 </FieldLabel>
                                 <Combobox
-                                    items={categorys}
-                                    value={categorys.find(
+                                    items={CATEGORIES}
+                                    value={CATEGORIES.find(
                                         (category) =>
                                             category.value === field.value,
                                     )}
                                     onValueChange={(category) =>
-                                        field.onChange(
-                                            category?.value ?? "",
-                                        )
+                                        field.onChange(category?.value ?? "")
                                     }
                                 >
                                     <ComboboxInput
@@ -290,10 +271,7 @@ export default function GigForm() {
                                         .trim()
                                         .replace(/,$/, ""); // remove trailing comma
 
-                                    if (
-                                        newTag &&
-                                        !tags.includes(newTag)
-                                    ) {
+                                    if (newTag && !tags.includes(newTag)) {
                                         field.onChange([...tags, newTag]);
                                     }
                                     setInputValue("");
@@ -302,9 +280,7 @@ export default function GigForm() {
 
                             const removeTag = (tagToRemove: string) => {
                                 field.onChange(
-                                    tags.filter(
-                                        (tag) => tag !== tagToRemove,
-                                    ),
+                                    tags.filter((tag) => tag !== tagToRemove),
                                 );
                             };
 
