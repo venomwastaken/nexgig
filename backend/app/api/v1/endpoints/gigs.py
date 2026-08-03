@@ -93,6 +93,34 @@ def list_gigs(
 
     return db.exec(statement).all()
 
+@router.get("/search", response_model=list[GigRead])
+def browse_gigs(
+    category_id: Optional[uuid.UUID] = None,
+    q: Optional[str] = None,
+    session: Session = Depends(get_db),
+    user: Optional[UserAccount] = Depends(get_current_user_optional),
+):
+    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
+
+    if category_id:
+        query = query.where(Gig.category_id == category_id)
+
+    if q:
+        pattern = f"%{q}%"
+        query = query.where(or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern)))
+
+    if user is None:
+        query = query.where(Gig.approval_status == GigApprovalStatus.APPROVED)
+    elif not user.is_admin:
+        query = query.where(
+            or_(
+                Gig.approval_status == GigApprovalStatus.APPROVED,
+                Gig.user_id == user.user_id,
+            )
+        )
+
+    return session.exec(query).all()
+
 @router.get("/{id}", response_model=GigRead)
 def get_gig(
     id: uuid.UUID, 
@@ -195,51 +223,3 @@ def delete_gig(
     db.delete(target)
     db.commit()
     return None
-
-def search_gigs(
-    session: Session,
-    category_id: Optional[uuid.UUID] = None,
-    keyword: Optional[str] = None,
-    limit: int = 20,
-    offset: int = 0,
-) -> list[Gig]:
-    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
-
-    if category_id:
-        query = query.where(Gig.category_id == category_id)
-
-    if keyword:
-        pattern = f"%{keyword}%"
-        query = query.where(
-            or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern))
-        )
-
-    return session.exec(query.offset(offset).limit(limit)).all()
-
-@router.get("/search", response_model=list[GigRead])
-def browse_gigs(
-    category_id: Optional[uuid.UUID] = None,
-    q: Optional[str] = None,
-    session: Session = Depends(get_db),
-    user: Optional[UserAccount] = Depends(get_current_user_optional),
-):
-    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
-
-    if category_id:
-        query = query.where(Gig.category_id == category_id)
-
-    if q:
-        pattern = f"%{q}%"
-        query = query.where(or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern)))
-
-    if user is None:
-        query = query.where(Gig.approval_status == GigApprovalStatus.APPROVED)
-    elif not user.is_admin:
-        query = query.where(
-            or_(
-                Gig.approval_status == GigApprovalStatus.APPROVED,
-                Gig.user_id == user.user_id,
-            )
-        )
-
-    return session.exec(query).all()

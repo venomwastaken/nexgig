@@ -1,10 +1,12 @@
 import SearchBar from "@/components/SearchBar";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CATEGORIES, Gig, GIGS } from "@/lib/gigs";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Clock, Heart } from "lucide-react";
+import { ApiGig, CATEGORIES, Gig, mapApiGigToGig } from "@/lib/gigs";
+import { useApi } from "@/hooks/useApi";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Clock, Heart, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 function timeAgo(iso: string) {
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -17,12 +19,42 @@ function timeAgo(iso: string) {
 }
 
 export default function Gigs() {
+    const api = useApi();
+    const [searchParams] = useSearchParams();
     const [q, setQ] = useState("");
     const [cat, setCat] = useState("All");
+    const [gigs, setGigs] = useState<Gig[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setQ(searchParams.get("q") ?? "");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        api
+            .get<ApiGig[]>("/gigs/search")
+            .then((res) => {
+                if (cancelled) return;
+                setGigs(res.data.map(mapApiGigToGig));
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Couldn't load gigs. Please try again.");
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const filtered = useMemo(() => {
-        return GIGS.filter((g) => {
-            if (cat !== "All" && g.category !== cat) return false;
+        return gigs.filter((g) => {
+            if (cat !== "All" && g.category.toLowerCase() !== cat.toLowerCase()) return false;
             if (!q.trim()) return true;
             const needle = q.toLowerCase();
             return (
@@ -33,7 +65,7 @@ export default function Gigs() {
                 g.provider.username.toLowerCase().includes(needle)
             );
         });
-    }, [q, cat]);
+    }, [gigs, q, cat]);
 
     return (
         <div className="min-h-screen bg-background">
@@ -43,7 +75,7 @@ export default function Gigs() {
                         Find help from people on campus.
                     </h1>
                     <p className="mt-2 text-muted-foreground">
-                        {GIGS.length} gigs posted on campus this week.
+                        {gigs.length} gigs posted on campus this week.
                     </p>
                 </div>
 
@@ -78,17 +110,25 @@ export default function Gigs() {
                     </aside>
 
                     <div className="flex-1 min-w-0">
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                            {filtered.map((g) => (
-                                <GigCard key={g.id} gig={g} />
-                            ))}
-                        </div>
-
-                        {filtered.length === 0 && (
-                            <div className="mt-16 text-center text-muted-foreground">
-                                No gigs match that search yet. Try a different
-                                keyword or category.
+                        {loading ? (
+                            <div className="flex justify-center py-24">
+                                <Loader2 className="animate-spin text-muted-foreground" size={24} />
                             </div>
+                        ) : (
+                            <>
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                    {filtered.map((g) => (
+                                        <GigCard key={g.id} gig={g} />
+                                    ))}
+                                </div>
+
+                                {filtered.length === 0 && (
+                                    <div className="mt-16 text-center text-muted-foreground">
+                                        No gigs match that search yet. Try a different
+                                        keyword or category.
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
@@ -197,7 +237,7 @@ export function GigCard({ gig }: { gig: Gig }) {
         >
             <AspectRatio ratio={16 / 9} className="relative">
                 <img
-                    src="../../assets/npc_image.jpeg"
+                    src={gig.banner_url || "../../assets/npc_image.jpeg"}
                     alt="Image"
                     className="rounded-md object-cover w-full h-full"
                 />

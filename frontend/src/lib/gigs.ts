@@ -37,13 +37,48 @@ export type Gig =   {
     // rejection_reason: string,
     // reviewed_at: string,
     // reviewed_by_id: string,
-    category: string
+    category: string,
+    banner_url?: string | null
     // {
     //   category_id: string,
     //   name: string,
     //   description: string
     // }
   }
+
+// Shape returned by the backend's GigRead schema (backend/app/schemas.py).
+export type ApiGig = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  banner_url?: string | null;
+  provider: Gig["provider"] | null;
+  status: string;
+  created_at: string;
+  tags: { id: number; name: string }[];
+  category: { name: string } | null;
+};
+
+export function mapApiGigToGig(g: ApiGig): Gig {
+  return {
+    id: g.id,
+    title: g.title,
+    description: g.description,
+    price: g.price,
+    banner_url: g.banner_url,
+    provider: g.provider ?? {
+      user_id: "",
+      first_name: "Unknown",
+      last_name: "Provider",
+      username: "unknown",
+    },
+    status: g.status,
+    created_at: g.created_at,
+    tags: g.tags.map((t) => t.name),
+    category: g.category?.name ?? "Other",
+  };
+}
 
 
 // {
