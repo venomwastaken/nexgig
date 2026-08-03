@@ -135,14 +135,16 @@ class GigBase(SQLModel):
 # Schema for creating a gig
 class GigCreate(GigBase):
     tags: List[str] = []
-    category_id: Optional[uuid.UUID] = None
+    category_name: str
+    turnaround_time: str
 
 # Schema for modifying mutable gig fields
 class GigUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-    category_id: Optional[uuid.UUID] = None
+    category_name: Optional[str] = None
+    turnaround_time: Optional[str] = None
     tag_ids: Optional[List[uuid.UUID]] = None
 
 # Schema for updating just the lifecycle state
@@ -157,13 +159,13 @@ class TagRead(SQLModel):
     class Config:
         from_attributes = True
 
-class CategoryRead(SQLModel):
-    category_id: uuid.UUID
-    name: str
-    description: Optional[str] = None
+# class CategoryRead(SQLModel):
+#     category_id: uuid.UUID
+#     name: str
+#     description: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+#     class Config:
+#         from_attributes = True
 
 class ProviderRead(SQLModel):
     user_id: uuid.UUID
@@ -187,7 +189,7 @@ class GigRead(GigBase):
     rejection_reason: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     reviewed_by_id: Optional[UUID] = None
-    category: Optional[CategoryRead] = None
+    category_name: str 
 
     class Config:
         from_attributes = True

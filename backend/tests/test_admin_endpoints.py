@@ -60,6 +60,8 @@ def test_admin_gig_review_flow():
             user_id=uuid.UUID("00000000-0000-0000-0000-000000000102"),
             approval_status=GigApprovalStatus.PENDING,
             status=GigStatus.ACTIVE,
+            category_name="Design",
+            turnaround_time="1 day",
         )
         session.add(gig)
         session.commit()
@@ -88,6 +90,8 @@ def test_admin_gig_review_flow():
         user_id=uuid.UUID("00000000-0000-0000-0000-000000000102"),
         approval_status=GigApprovalStatus.PENDING,
         status=GigStatus.ACTIVE,
+        category_name="Development",
+        turnaround_time="2 days",
     )
     with Session(engine) as session:
         session.add(second_gig)

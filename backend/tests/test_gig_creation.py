@@ -16,7 +16,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 from app.api.v1.endpoints.gigs import browse_gigs, create_gig, list_gigs
 from app.core.database import get_db
 from app.main import app
-from app.models import Category, Gig, GigApprovalStatus, GigTagLink, Tag, UserAccount
+from app.models import Gig, GigApprovalStatus, GigTagLink, Tag, UserAccount
 from app.schemas import GigCreate
 
 
@@ -39,6 +39,8 @@ def test_create_gig_creates_links_with_sqlmodel_primary_keys(session):
         description="A test gig for regression coverage",
         price=25.0,
         tags=["helper"],
+        category_name="Design",
+        turnaround_time="1 day",
     )
 
     created = create_gig(payload=payload, user=user, db=session)
@@ -63,6 +65,8 @@ def test_list_gigs_filters_visibility_for_non_admins(session):
         price=40.0,
         user_id=owner.user_id,
         approval_status=GigApprovalStatus.APPROVED,
+        category_name="Design",
+        turnaround_time="1 day",
     )
     pending_gig = Gig(
         title="Pending gig",
@@ -70,6 +74,8 @@ def test_list_gigs_filters_visibility_for_non_admins(session):
         price=50.0,
         user_id=owner.user_id,
         approval_status=GigApprovalStatus.PENDING,
+        category_name="Design",
+        turnaround_time="2 days",
     )
     session.add_all([approved_gig, pending_gig])
     session.commit()
@@ -85,18 +91,14 @@ def test_search_endpoint_logic_returns_matching_gigs():
     SQLModel.metadata.create_all(engine)
 
     with Session(engine) as session:
-        category = Category(name="Design", description="Visual services")
-        session.add(category)
-        session.commit()
-        session.refresh(category)
-
         matching_gig = Gig(
             title="Logo design",
             description="A service for branding",
             price=30.0,
             user_id=uuid.UUID("00000000-0000-0000-0000-000000000123"),
             approval_status=GigApprovalStatus.APPROVED,
-            category_id=category.category_id,
+            category_name="Design",
+            turnaround_time="3 days",
         )
         non_matching_gig = Gig(
             title="Copywriting",
@@ -104,7 +106,8 @@ def test_search_endpoint_logic_returns_matching_gigs():
             price=20.0,
             user_id=uuid.UUID("00000000-0000-0000-0000-000000000124"),
             approval_status=GigApprovalStatus.APPROVED,
-            category_id=category.category_id,
+            category_name="Design",
+            turnaround_time="4 days",
         )
         session.add_all([matching_gig, non_matching_gig])
         session.commit()
