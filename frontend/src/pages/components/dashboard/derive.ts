@@ -1,4 +1,4 @@
-import { Gig, Transaction, ServiceRequest, Category } from "./types";
+import { Gig, Transaction, ServiceRequest } from "./types";
 
 export const gigsForUser = (gigs: Gig[], userId: string): Gig[] =>
   gigs.filter((g) => g.userId === userId);
@@ -19,20 +19,6 @@ export const gigToServiceRequest = (g: Gig): ServiceRequest => ({
   status: g.projectStatus,
   updatedAt: g.date,
 });
-
-export const buildCategories = (
-  names: { id: string; name: string }[],
-  allGigs: Gig[]
-): Category[] =>
-  names.map((c) => ({
-    id: c.id,
-    name: c.name,
-    activeGigs: allGigs.filter(
-      (g) =>
-        g.categoryId === c.id &&
-        !["completed", "cancelled"].includes(g.projectStatus)
-    ).length,
-  }));
 
 export const computeStats = (gigs: Gig[]) => {
   const completed = gigs.filter((g) => g.paymentStatus === "completed");

@@ -15,12 +15,6 @@ export interface ServiceRequest {
   updatedAt: string;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  activeGigs: number;
-}
-
 export const REQUEST_STATUS_LABELS: Record<ServiceRequest["status"], string> = {
   requested: "Requested",
   confirmed: "Confirmed",
@@ -74,4 +68,23 @@ export interface Notification {
   message: string;
   date: string;
   read: boolean;
+}
+
+export type GigApprovalStatus = "pending" | "approved" | "rejected";
+
+export interface GigSubmission {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  description: string;
+  tags: string[];
+  submittedAt: string;
+  provider: {
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  status: GigApprovalStatus;
+  rejectionReason?: string;
 }

@@ -88,6 +88,16 @@ export default function Navbar() {
                         >
                             Account
                         </Link>
+                        <Link
+                            to="/admin"
+                            className={`text-sm transition-colors ${
+                                isActive("/admin")
+                                    ? "text-[#ffffff]"
+                                    : "text-[#8B8F9B] hover:text-[#ffffff]"
+                            }`}
+                        >
+                            Admin
+                        </Link>
                         <UserButton />
                     </Show>
                 </div>
@@ -166,6 +176,13 @@ export default function Navbar() {
                                 className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
                             >
                                 Account
+                            </Link>
+                            <Link
+                                to="/admin"
+                                onClick={() => setMobileOpen(false)}
+                                className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
+                            >
+                                Admin
                             </Link>
                             <div className="flex justify-center pt-1">
                                 <UserButton />

@@ -1,16 +1,10 @@
-import { User, Gig } from "./types";
+import { User, Gig, GigSubmission } from "./types";
 
 export const CURRENT_USER_ID = "u1";
 
 export const users: User[] = [
   { id: "u1", name: "Joshua", role: "freelancer", rating: 4.9, reviewCount: 21 },
   { id: "u2", name: "Efua Owusu", role: "admin", rating: 4.7, reviewCount: 15 },
-];
-
-export const categoryNames = [
-  { id: "CAT-1", name: "Web Development" },
-  { id: "CAT-2", name: "Graphic Design" },
-  { id: "CAT-3", name: "Data Entry" },
 ];
 
 export const gigs: Gig[] = [
@@ -54,5 +48,68 @@ export const notifications: Notification[] = [
     message: "Your gig \"Logo + brand kit\" was marked completed.",
     date: "Jul 20",
     read: true,
+  },
+];
+
+export const gigSubmissions: GigSubmission[] = [
+  {
+    id: "GIG-2101",
+    title: "Minimalist logo & brand kit for your side project",
+    category: "Design",
+    price: 120,
+    description:
+      "Clean, modern logo design with color palette, typography guide, and social profile assets. Two revision rounds included.",
+    tags: ["Logo", "Branding", "Figma"],
+    submittedAt: "Aug 2",
+    provider: { name: "Ama Boateng", username: "amaboateng" },
+    status: "pending",
+  },
+  {
+    id: "GIG-2102",
+    title: "1-on-1 Calculus tutoring — MATH 151 & 161",
+    category: "Tutoring",
+    price: 40,
+    description:
+      "Struggling with limits, derivatives or integrals? I'll walk you through past questions and build your intuition.",
+    tags: ["Math", "Tutoring", "Exam prep"],
+    submittedAt: "Aug 2",
+    provider: { name: "Kwesi Adom", username: "kwesiadom" },
+    status: "pending",
+  },
+  {
+    id: "GIG-2098",
+    title: "Weekly grocery + laundry pickup runs",
+    category: "Errands",
+    price: 25,
+    description:
+      "Too much on your plate this week? I'll pick up from Tech Junction or Ayeduase and drop it at your hall.",
+    tags: ["Errands", "On-campus"],
+    submittedAt: "Aug 1",
+    provider: { name: "Efua Danso", username: "efuadanso" },
+    status: "pending",
+  },
+  {
+    id: "GIG-2095",
+    title: "Campus portrait shoot — 20 edited photos",
+    category: "Photography",
+    price: 200,
+    description:
+      "Golden-hour portraits around Independence Hall or Paa Joe stadium. I bring the camera; you bring the fits.",
+    tags: ["Portraits", "Editing", "Outdoor"],
+    submittedAt: "Jul 30",
+    provider: { name: "Yaw Mensah", username: "yawmensah" },
+    status: "approved",
+  },
+  {
+    id: "GIG-2090",
+    title: "Sell my old textbooks and notes as PDFs",
+    category: "Other",
+    price: 15,
+    description: "Scanned copies of last semester's course notes, sold per course.",
+    tags: ["Notes", "PDF"],
+    submittedAt: "Jul 28",
+    provider: { name: "Kojo Amankwah", username: "kojoamankwah" },
+    status: "rejected",
+    rejectionReason: "Reselling copyrighted course material isn't allowed on the platform.",
   },
 ];
