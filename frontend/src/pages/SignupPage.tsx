@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import TextField from "./ui/TextField";
-import PasswordField from "./ui/PasswordField";
-import Button from "./ui/Button";
-import AuthCard from "./ui/AuthCard";
+import TextField from "./components/ui/TextField";
+import PasswordField from "./components/ui/PasswordField";
+import Button from "./components/ui/Button";
+import AuthCard from "./components/ui/AuthCard";
 
 import * as z from "zod";
 import { Controller, useForm } from "react-hook-form";
