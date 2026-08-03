@@ -6,7 +6,20 @@ from typing import Annotated, List, Optional
 
 from app.models import Category, Gig, GigApprovalStatus, GigStatus, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
 from app.core.database import get_db
-from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
+from app.core.storage import (
+    ALLOWED_IMAGE_CONTENT_TYPES,
+    build_gig_banner_object_key,
+    generate_presigned_put,
+    public_url_for_key,
+)
+from app.schemas import (
+    AttachmentPresignRequest,
+    AttachmentPresignResponse,
+    GigCreate,
+    GigRead,
+    GigUpdate,
+    GigStatusUpdate,
+)
 from app.api.v1.endpoints.users import get_or_create_user
 
 
@@ -58,6 +71,24 @@ def create_gig(
     db.commit()
     db.refresh(new_gig)
     return new_gig
+
+@router.post("/banner-presign", response_model=AttachmentPresignResponse)
+def presign_gig_banner(
+    payload: AttachmentPresignRequest,
+    user: UserAccount = Depends(get_or_create_user),
+):
+    if payload.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only image uploads are supported")
+
+    object_key = build_gig_banner_object_key(user.user_id, payload.filename)
+    try:
+        upload_url = generate_presigned_put(object_key, payload.content_type)
+        object_url = public_url_for_key(object_key)
+    except KeyError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Image uploads aren't configured yet")
+
+    return AttachmentPresignResponse(upload_url=upload_url, object_url=object_url, object_key=object_key)
+
 
 @router.get("/", response_model=List[GigRead])
 def list_gigs(

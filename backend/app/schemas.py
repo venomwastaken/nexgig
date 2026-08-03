@@ -132,6 +132,7 @@ class GigBase(SQLModel):
     description: str
     price: float
     banner_url: Optional[str] = None
+    turnaround_time: Optional[str] = None
 
 # Schema for creating a gig
 class GigCreate(GigBase):
@@ -146,6 +147,7 @@ class GigUpdate(SQLModel):
     category_id: Optional[uuid.UUID] = None
     tag_ids: Optional[List[uuid.UUID]] = None
     banner_url: Optional[str] = None
+    turnaround_time: Optional[str] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(SQLModel):

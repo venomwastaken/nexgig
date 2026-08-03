@@ -18,6 +18,19 @@ export const CATEGORIES: Category[] = [
     { label: "Other", value: "other" },
 ];
 
+export type DeliveryOption = {
+    label: string;
+    value: string;
+};
+
+export const DELIVERY_OPTIONS: DeliveryOption[] = [
+    { label: "1 day", value: "1 day" },
+    { label: "3 days", value: "3 days" },
+    { label: "1 week", value: "1 week" },
+    { label: "2 weeks", value: "2 weeks" },
+    { label: "1 month", value: "1 month" },
+];
+
 export type Gig =   {
     title: string,
     description: string,
