@@ -118,7 +118,7 @@ class UserReview(SQLModel, table=True):
     review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     reviewer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     reviewee_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    service_id: uuid.UUID  
+    service_id: uuid.UUID   
     rating: int
     comment: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -149,9 +149,9 @@ class Gig(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    category_id: Optional[uuid.UUID] = Field(default=None, foreign_key="category.category_id", index=True)
+    category_name: str = Field(index=True)
     banner_url: Optional[str] = Field(default=None)
-    turnaround_time: Optional[str] = Field(default=None, max_length=100)
+    turnaround_time: str = Field(max_length=100)
 
     user: Optional["UserAccount"] = Relationship(
         back_populates="gigs",
@@ -167,12 +167,12 @@ class Gig(SQLModel, table=True):
         return self.user_id
 
 
-class Category(SQLModel, table=True):
-    __tablename__ = "category"
+# class Category(SQLModel, table=True):
+#     __tablename__ = "category"
 
-    category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(unique=True, index=True)
-    description: Optional[str] = Field(default=None)
+#     category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+#     name: str = Field(unique=True, index=True)
+#     description: Optional[str] = Field(default=None)
 
 
 class Tag(SQLModel, table=True):
