@@ -20,7 +20,7 @@ _NEXT_STATUS = {
 }
 
 
-def _load_buyer_summary(user_id: uuid.UUID, db: Session) -> ProviderRead:
+def _load_user_summary(user_id: uuid.UUID, db: Session) -> ProviderRead:
     profile = db.exec(select(UserProfile).where(UserProfile.user_id == user_id)).first()
     if not profile:
         return ProviderRead(user_id=user_id, first_name="Unknown", last_name="User", username="unknown")
@@ -38,8 +38,9 @@ def _to_order_read(order: GigOrder, gig_title: str, db: Session) -> OrderRead:
         id=order.order_id,
         gig_id=order.gig_id,
         gig_title=gig_title,
-        buyer=_load_buyer_summary(order.buyer_id, db),
+        buyer=_load_user_summary(order.buyer_id, db),
         provider_id=order.provider_id,
+        provider=_load_user_summary(order.provider_id, db),
         price=order.price,
         note=order.note,
         status=order.status,

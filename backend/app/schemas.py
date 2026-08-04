@@ -216,6 +216,7 @@ class OrderRead(SQLModel):
     gig_title: str
     buyer: ProviderRead
     provider_id: uuid.UUID
+    provider: ProviderRead
     price: Decimal
     note: Optional[str] = None
     status: OrderStatus
