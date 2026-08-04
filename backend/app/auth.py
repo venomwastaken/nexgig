@@ -14,10 +14,7 @@ security = HTTPBearer()
 _jwks_client = PyJWKClient(CLERK_JWKS_URL)
 
 
-def verify_clerk_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> dict:
-    token = credentials.credentials
+def _decode_and_verify(token: str) -> dict:
     try:
         signing_key = _jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
@@ -33,6 +30,20 @@ def verify_clerk_token(
             detail="Invalid or expired token",
         )
     return payload
+
+
+def verify_clerk_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
+    return _decode_and_verify(credentials.credentials)
+
+
+def verify_clerk_token_string(token: str) -> dict:
+    """Same verification as verify_clerk_token, for callers (WebSocket routes) that
+    receive the raw JWT as a plain string (e.g. a `?token=` query param) instead of
+    via the Authorization header / HTTPBearer machinery — browsers can't set custom
+    headers on native WebSocket connections."""
+    return _decode_and_verify(token)
 
 
 def clerk_id_from_token(payload: dict = Depends(verify_clerk_token)) -> str:

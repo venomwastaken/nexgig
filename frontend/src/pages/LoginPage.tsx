@@ -65,16 +65,28 @@ export default function LoginPage({
 
         try {
             setIsSubmitting(true);
-            const { error} = await signIn.password({
+            const { error } = await signIn.password({
                 emailAddress: form.email,
                 password: form.password,
             });
 
-            if(error){
-                throw new Error(error.message)
+            if (error) {
+                throw new Error(error.message);
             }
-            navigate('/')
-            
+
+            // signIn.password() only advances the sign-in attempt — it does
+            // NOT activate a session by itself. Until finalize() runs, Clerk's
+            // auth state (isSignedIn, useUser, etc.) still reflects the old
+            // signed-out state, so navigating before this resolves is what
+            // made the destination page look "stale."
+            if (signIn.status === "complete") {
+                const { error: finalizeError } = await signIn.finalize();
+                if (finalizeError) {
+                    throw new Error(finalizeError.message);
+                }
+            }
+
+            navigate("/");
         } catch (err) {
             setError(
                 err instanceof Error

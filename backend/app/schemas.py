@@ -71,16 +71,26 @@ class UserProfileRead(BaseModel):
 
 # ---------- UserSkill ----------
 
+<<<<<<< HEAD
 class UserSkillCreate(BaseModel):
     category: str
+=======
+class UserSkillCreate(SQLModel):
+    category_name: str
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
     skill_name: str
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Decimal = Field(gt=0)
     is_active: bool = True
 
 
+<<<<<<< HEAD
 class UserSkillUpdate(BaseModel):
     category: Optional[str] = None
+=======
+class UserSkillUpdate(SQLModel):
+    category_name: Optional[str] = None
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
     skill_name: Optional[str] = None
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Optional[Decimal] = Field(default=None, gt=0)
@@ -90,7 +100,7 @@ class UserSkillUpdate(BaseModel):
 class UserSkillRead(BaseModel):
     skill_id: uuid.UUID
     user_id: uuid.UUID
-    category: str
+    category_name: str
     skill_name: str
     description: Optional[str] = None
     hourly_rate_token_cost: Decimal
@@ -130,19 +140,23 @@ class GigBase(BaseModel):
     title: str
     description: str
     price: float
+    banner_url: Optional[str] = None
+    turnaround_time: str
 
 # Schema for creating a gig
 class GigCreate(GigBase):
     tags: List[str] = []
-    category_id: Optional[uuid.UUID] = None
+    category_name: str 
 
 # Schema for modifying mutable gig fields
 class GigUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-    category_id: Optional[uuid.UUID] = None
+    category_name: Optional[str] = None
     tag_ids: Optional[List[uuid.UUID]] = None
+    banner_url: Optional[str] = None
+    turnaround_time: Optional[str] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(BaseModel):
@@ -155,17 +169,32 @@ class TagRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+<<<<<<< HEAD
 class CategoryRead(BaseModel):
     category_id: uuid.UUID
     name: str
     description: Optional[str] = None
+=======
+# class CategoryRead(SQLModel):
+#     name: str
+
+#     class Config:
+#         from_attributes = True
+
+class ProviderRead(SQLModel):
+    user_id: uuid.UUID
+    first_name: str
+    last_name: str
+    username: str
+    avatar_url: Optional[str] = None
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 
     model_config = ConfigDict(from_attributes=True)
 
 # Publicly visible representation of a Gig
 class GigRead(GigBase):
     id: uuid.UUID
-    provider_id: uuid.UUID
+    provider: Optional[ProviderRead] = None
     status: GigStatus
     created_at: datetime
     tags: List[TagRead] = []
@@ -174,11 +203,12 @@ class GigRead(GigBase):
     rejection_reason: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     reviewed_by_id: Optional[UUID] = None
-    category: Optional[CategoryRead] = None
+    category_name: str
 
     class Config:
         from_attributes = True
 
+<<<<<<< HEAD
 # ---------- Enums ----------
 
 class AccountStatus(str, Enum):
@@ -198,4 +228,43 @@ class AdminUser(BaseModel):
 
 class UserStatusUpdate(BaseModel):
     status: AccountStatus
+=======
+
+# ---------- Messaging ----------
+
+class ConversationCreate(SQLModel):
+    other_user_id: uuid.UUID
+    gig_id: Optional[uuid.UUID] = None
+
+
+class ConversationRead(SQLModel):
+    id: uuid.UUID
+    other_participant: ProviderRead
+    gig_id: Optional[uuid.UUID] = None
+    last_message_at: Optional[datetime] = None
+    last_message_preview: Optional[str] = None
+    unread_count: int = 0
+    created_at: datetime
+
+
+class MessageRead(SQLModel):
+    id: uuid.UUID
+    conversation_id: uuid.UUID
+    sender_id: uuid.UUID
+    body: Optional[str] = None
+    attachment_url: Optional[str] = None
+    attachment_type: Optional[str] = None
+    created_at: datetime
+
+
+class AttachmentPresignRequest(SQLModel):
+    filename: str
+    content_type: str
+
+
+class AttachmentPresignResponse(SQLModel):
+    upload_url: str
+    object_url: str
+    object_key: str
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 

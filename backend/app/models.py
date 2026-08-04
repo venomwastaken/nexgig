@@ -107,6 +107,7 @@ class UserProfile(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     bio: Optional[str] = Field(default=None)
+    university: Optional[str] = Field(default=None)
 
     user: "UserAccount" = Relationship(back_populates="profile")
     skill_links: List["UserSkillLink"] = Relationship(back_populates="profile")
@@ -133,7 +134,7 @@ class UserReview(SQLModel, table=True):
     review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     reviewer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     reviewee_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    service_id: uuid.UUID  
+    service_id: uuid.UUID   
     rating: int
     comment: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -164,7 +165,9 @@ class Gig(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    category_id: Optional[uuid.UUID] = Field(default=None, foreign_key="category.category_id", index=True)
+    category_name: str = Field(index=True)
+    banner_url: Optional[str] = Field(default=None)
+    turnaround_time: str = Field(max_length=100)
 
     user: Optional["UserAccount"] = Relationship(
         back_populates="gigs",
@@ -184,12 +187,18 @@ class Gig(SQLModel, table=True):
         return self.user_id
 
 
-class Category(SQLModel, table=True):
-    __tablename__ = "category"
+# class Category(SQLModel, table=True):
+#     __tablename__ = "category"
 
+<<<<<<< HEAD
     category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     name: str = Field(unique=True, index=True)
     description: Optional[str] = Field(default=None)
+=======
+#     category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+#     name: str = Field(unique=True, index=True)
+#     description: Optional[str] = Field(default=None)
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 
 
 class Tag(SQLModel, table=True):
@@ -209,6 +218,7 @@ class GigTagLink(SQLModel, table=True):
     gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
     tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)
 
+<<<<<<< HEAD
 class Booking(SQLModel, table=True):
     __tablename__ = "booking"
 
@@ -251,3 +261,32 @@ class Booking(SQLModel, table=True):
         back_populates="bookings_as_freelancer",
         sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
     )
+=======
+
+class Conversation(SQLModel, table=True):
+    __tablename__ = "conversation"
+
+    conversation_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    # Normalized unordered pair: user_a_id is always the smaller UUID (via uuid.UUID's
+    # built-in comparison), so UNIQUE(user_a_id, user_b_id) guarantees exactly one
+    # conversation per participant pair regardless of who messages first.
+    user_a_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    user_b_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    gig_id: Optional[uuid.UUID] = Field(default=None, foreign_key="gig.gig_id", index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    last_message_at: Optional[datetime] = Field(default=None, index=True)
+    user_a_last_read_at: Optional[datetime] = Field(default=None)
+    user_b_last_read_at: Optional[datetime] = Field(default=None)
+
+
+class Message(SQLModel, table=True):
+    __tablename__ = "message"
+
+    message_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    conversation_id: uuid.UUID = Field(foreign_key="conversation.conversation_id", index=True)
+    sender_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    body: Optional[str] = Field(default=None, max_length=4000)
+    attachment_url: Optional[str] = Field(default=None, max_length=2048)
+    attachment_type: Optional[str] = Field(default=None, max_length=100)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+>>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
