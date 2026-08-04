@@ -147,6 +147,7 @@ class GigUpdate(SQLModel):
     category_name: Optional[str] = None
     tag_ids: Optional[List[uuid.UUID]] = None
     banner_url: Optional[str] = None
+    turnaround_time: Optional[str] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(SQLModel):

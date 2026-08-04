@@ -64,7 +64,7 @@ export default function Messages() {
                     Messages
                 </h1>
 
-                <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-260px)] min-h-[480px]">
+                <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-260px)] min-h-120">
                     <div className={cn(conversationId && "hidden md:block")}>
                         <ConversationListPane
                             conversations={conversations}

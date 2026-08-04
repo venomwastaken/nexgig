@@ -6,7 +6,20 @@ from typing import Annotated, List, Optional
 
 from app.models import Gig, GigApprovalStatus, GigStatus, GigTagLink, UserAccount, UserProfile, Tag
 from app.core.database import get_db
-from app.schemas import GigCreate, GigRead, GigUpdate, GigStatusUpdate
+from app.core.storage import (
+    ALLOWED_IMAGE_CONTENT_TYPES,
+    build_gig_banner_object_key,
+    generate_presigned_put,
+    public_url_for_key,
+)
+from app.schemas import (
+    AttachmentPresignRequest,
+    AttachmentPresignResponse,
+    GigCreate,
+    GigRead,
+    GigUpdate,
+    GigStatusUpdate,
+)
 from app.api.v1.endpoints.users import get_or_create_user
 
 
@@ -53,6 +66,24 @@ def create_gig(
     db.refresh(new_gig)
     return new_gig
 
+@router.post("/banner-presign", response_model=AttachmentPresignResponse)
+def presign_gig_banner(
+    payload: AttachmentPresignRequest,
+    user: UserAccount = Depends(get_or_create_user),
+):
+    if payload.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only image uploads are supported")
+
+    object_key = build_gig_banner_object_key(user.user_id, payload.filename)
+    try:
+        upload_url = generate_presigned_put(object_key, payload.content_type)
+        object_url = public_url_for_key(object_key)
+    except KeyError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Image uploads aren't configured yet")
+
+    return AttachmentPresignResponse(upload_url=upload_url, object_url=object_url, object_key=object_key)
+
+
 @router.get("/", response_model=List[GigRead])
 def list_gigs(
     tag_id: Annotated[Optional[uuid.UUID], Query(description="Filter gigs by tag ID")] = None,
@@ -86,6 +117,34 @@ def list_gigs(
         )
 
     return db.exec(statement).all()
+
+@router.get("/search", response_model=list[GigRead])
+def browse_gigs(
+    category_id: Optional[uuid.UUID] = None,
+    q: Optional[str] = None,
+    session: Session = Depends(get_db),
+    user: Optional[UserAccount] = Depends(get_current_user_optional),
+):
+    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
+
+    if category_id:
+        query = query.where(Gig.category_id == category_id)
+
+    if q:
+        pattern = f"%{q}%"
+        query = query.where(or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern)))
+
+    if user is None:
+        query = query.where(Gig.approval_status == GigApprovalStatus.APPROVED)
+    elif not user.is_admin:
+        query = query.where(
+            or_(
+                Gig.approval_status == GigApprovalStatus.APPROVED,
+                Gig.user_id == user.user_id,
+            )
+        )
+
+    return session.exec(query).all()
 
 @router.get("/{id}", response_model=GigRead)
 def get_gig(
