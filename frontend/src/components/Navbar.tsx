@@ -27,7 +27,9 @@ import { Button } from "./ui/button";
 
 const NAV_LINKS = [
     { label: "Explore", to: "/gigs" },
-    { label: "Contact Us", to: "/" },
+    { label: "About", to: "/about" },
+    { label: "FAQ", to: "/faq" },
+    { label: "Contact Us", to: "/contact" },
 ];
 
 function NavSearch({ className = "" }: { className?: string }) {

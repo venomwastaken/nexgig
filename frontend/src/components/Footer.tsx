@@ -13,13 +13,20 @@ const ACCOUNT_LINKS = [
     { label: "Sign up", to: "/signup" },
 ];
 
+const COMPANY_LINKS = [
+    { label: "About us", to: "/about" },
+    { label: "FAQ", to: "/faq" },
+    { label: "Contact us", to: "/contact" },
+    { label: "Terms and Conditions", to: "/terms" },
+];
+
 export default function Footer() {
     const year = new Date().getFullYear();
 
     return (
         <footer className="border-t border-[#1F1F1F] bg-[#0B0B0B]">
             <div className="mx-auto max-w-[95%] px-4 py-12 sm:px-6">
-                <div className="grid grid-cols-1 gap-10 sm:grid-cols-[2fr_1fr_1fr]">
+                <div className="grid grid-cols-1 gap-10 sm:grid-cols-[2fr_1fr_1fr_1fr]">
                     {/* Brand */}
                     <div className="max-w-xs">
                         <Logo />
@@ -60,6 +67,23 @@ export default function Footer() {
                         <h6 className="text-label mb-4">Account</h6>
                         <ul className="flex flex-col gap-3">
                             {ACCOUNT_LINKS.map((link) => (
+                                <li key={link.to}>
+                                    <Link
+                                        to={link.to}
+                                        className="text-sm text-muted transition-colors hover:text-[#ffffff]"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Company links */}
+                    <div>
+                        <h6 className="text-label mb-4">Company</h6>
+                        <ul className="flex flex-col gap-3">
+                            {COMPANY_LINKS.map((link) => (
                                 <li key={link.to}>
                                     <Link
                                         to={link.to}

@@ -14,6 +14,10 @@ import Messages from './pages/Messages';
 import { ProfileStatusProvider } from '@/hooks/useProfileStatus';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/components/dashboard/AdminDashboard';
+import AboutUs from './pages/AboutUs';
+import Terms from './pages/Terms';
+import Contact from './pages/Contact';
+import FAQ from './pages/FAQ';
 
 export default function App() {
     return (
@@ -52,6 +56,12 @@ export default function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/gigs" element={<Gigs />} />
                     <Route path="/gigs/:id" element={<GigView />} />
+
+                    {/* Static informational pages, public to all visitors */}
+                    <Route path="/about" element={<AboutUs />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/faq" element={<FAQ />} />
 
                     {/* Requires a signed-in user; redirects to /login otherwise */}
                     <Route
