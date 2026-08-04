@@ -206,6 +206,13 @@ export interface ApiOrder {
     avatar_url?: string | null;
   };
   provider_id: string;
+  provider: {
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    username: string;
+    avatar_url?: string | null;
+  };
   price: number;
   note?: string | null;
   status: OrderStatus;
@@ -221,6 +228,36 @@ export function mapApiOrder(o: ApiOrder): IncomingRequest {
     buyerName: `${o.buyer.first_name} ${o.buyer.last_name}`,
     buyerUsername: o.buyer.username,
     buyerAvatarUrl: o.buyer.avatar_url ?? undefined,
+    price: o.price,
+    note: o.note,
+    status: o.status,
+    createdAt: o.created_at,
+  };
+}
+
+// ---------- Ordered services (gigs the current user has booked as a buyer) ----------
+
+export interface OrderedService {
+  id: string;
+  gigId: string;
+  gigTitle: string;
+  providerName: string;
+  providerUsername: string;
+  providerAvatarUrl?: string;
+  price: number;
+  note?: string | null;
+  status: OrderStatus;
+  createdAt: string;
+}
+
+export function mapApiOrderToOrderedService(o: ApiOrder): OrderedService {
+  return {
+    id: o.id,
+    gigId: o.gig_id,
+    gigTitle: o.gig_title,
+    providerName: `${o.provider.first_name} ${o.provider.last_name}`,
+    providerUsername: o.provider.username,
+    providerAvatarUrl: o.provider.avatar_url ?? undefined,
     price: o.price,
     note: o.note,
     status: o.status,
