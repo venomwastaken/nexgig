@@ -30,7 +30,7 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="max-w-xs">
                         <Logo />
-                        <p className="mt-3 text-sm text-muted">
+                        <p className="mt-3 text-sm text-muted-foreground">
                             A peer-to-peer marketplace where students post and
                             pick up gigs on campus.
                         </p>
@@ -38,7 +38,7 @@ export default function Footer() {
                             href="https://github.com/venomwastaken/nexgig"
                             target="_blank"
                             rel="noreferrer"
-                            className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-[#ffffff]"
+                            className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-[#ffffff]"
                         >
                             <ExternalLink size={14} />
                             View on GitHub
@@ -53,7 +53,7 @@ export default function Footer() {
                                 <li key={link.to}>
                                     <Link
                                         to={link.to}
-                                        className="text-sm text-muted transition-colors hover:text-[#ffffff]"
+                                        className="text-sm text-muted-foreground transition-colors hover:text-[#ffffff]"
                                     >
                                         {link.label}
                                     </Link>
@@ -70,7 +70,7 @@ export default function Footer() {
                                 <li key={link.to}>
                                     <Link
                                         to={link.to}
-                                        className="text-sm text-muted transition-colors hover:text-[#ffffff]"
+                                        className="text-sm text-muted-foreground transition-colors hover:text-[#ffffff]"
                                     >
                                         {link.label}
                                     </Link>
@@ -87,7 +87,7 @@ export default function Footer() {
                                 <li key={link.to}>
                                     <Link
                                         to={link.to}
-                                        className="text-sm text-muted transition-colors hover:text-[#ffffff]"
+                                        className="text-sm text-muted-foreground transition-colors hover:text-[#ffffff]"
                                     >
                                         {link.label}
                                     </Link>
@@ -98,7 +98,7 @@ export default function Footer() {
                 </div>
 
                 <div className="divider mt-10 pt-6">
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-shadow-muted-foreground">
                         &copy; {year} NexGig. Built as a student project.
                     </p>
                 </div>
