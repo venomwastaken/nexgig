@@ -1,7 +1,7 @@
 """merge multiple heads
 
 Revision ID: e242c23bb3d4
-Revises: 480170f3eba4, 4e5fe6dc2939
+Revises: beec2f9727aa
 Create Date: 2026-08-03 17:08:25.762832
 
 """
@@ -14,7 +14,7 @@ import sqlmodel
 
 # revision identifiers, used by Alembic.
 revision: str = 'e242c23bb3d4'
-down_revision: Union[str, Sequence[str], None] = ('480170f3eba4', '4e5fe6dc2939')
+down_revision: Union[str, Sequence[str], None] = 'beec2f9727aa'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
