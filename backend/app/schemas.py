@@ -39,6 +39,10 @@ class UserWalletRead(SQLModel):
 
 # ---------- UserProfile ----------
 
+class UsernameAvailabilityRead(SQLModel):
+    available: bool
+
+
 class UserProfileCreate(SQLModel):
     first_name: str
     last_name: str
@@ -46,6 +50,7 @@ class UserProfileCreate(SQLModel):
     dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
@@ -53,8 +58,10 @@ class UserProfileUpdate(SQLModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = None
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     updated_at: Optional[datetime] = None
 
 
@@ -64,8 +71,10 @@ class UserProfileRead(SQLModel):
     first_name: str
     last_name: str
     username: str
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
+    university: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

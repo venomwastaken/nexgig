@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import Gigs from './pages/Gigs';
 import GigView from './pages/GigView';
 import Messages from './pages/Messages';
+import { ProfileStatusProvider } from '@/hooks/useProfileStatus';
 
 export default function App() {
     return (
@@ -18,6 +19,9 @@ export default function App() {
             {/* sonner's toast() calls (used across profile/account forms) render
                 through this — without it mounted, toasts fire silently. */}
             <Toaster />
+            {/* Tracks onboarding completion for signed-in users; Layout reads
+                this to gate routes, OnboardingWizard writes to it on finish. */}
+            <ProfileStatusProvider>
             <Routes>
                 {/* Auth pages render full-screen via AuthCard, no navbar */}
                 <Route path="/login" element={<LoginPage />} />
@@ -67,6 +71,7 @@ export default function App() {
                     <Route path="*" element={<h1>Page not found</h1>} />
                 </Route>
             </Routes>
+            </ProfileStatusProvider>
         </BrowserRouter>
     );
 }

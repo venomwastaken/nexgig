@@ -37,6 +37,11 @@ def build_gig_banner_object_key(user_id: uuid.UUID, filename: str) -> str:
     return f"gigs/{user_id}/{uuid.uuid4()}-{safe_name}"
 
 
+def build_avatar_object_key(user_id: uuid.UUID, filename: str) -> str:
+    safe_name = filename.replace("/", "_")
+    return f"avatars/{user_id}/{uuid.uuid4()}-{safe_name}"
+
+
 def generate_presigned_put(object_key: str, content_type: str, expires_in: int = 300) -> str:
     bucket = os.environ["R2_BUCKET"]
     return _get_s3_client().generate_presigned_url(
