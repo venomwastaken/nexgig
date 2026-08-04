@@ -2,7 +2,7 @@ import os
 from sqlmodel import create_engine, Session
 
 # Replace with your actual database URL string or environment variable loader
-DATABASE_URL = os.environ["DATABASE_URL"]
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 engine = create_engine(DATABASE_URL, echo=True)
 
 def get_db():

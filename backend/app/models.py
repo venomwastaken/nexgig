@@ -18,12 +18,24 @@ class GigApprovalStatus(str, Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
 
+class OrderStatus(str, Enum):
+    REQUESTED = "requested"
+    CONFIRMED = "confirmed"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
 class AccountStatus(str, Enum):
     PENDING_VERIFICATION = "pending_verification"
     ACTIVE = "active"
     SUSPENDED = "suspended"
     DEACTIVATED = "deactivated"
 
+class VerificationStatus(str, Enum):
+    unverified = "unverified"
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
 
 class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
@@ -166,6 +178,28 @@ class Gig(SQLModel, table=True):
     def provider_id(self) -> uuid.UUID:
         return self.user_id
 
+    @property
+    def provider(self) -> Optional["UserProfile"]:
+        return self.user.profile if self.user else None
+
+
+class GigOrder(SQLModel, table=True):
+    __tablename__ = "gig_order"
+
+    order_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", index=True)
+    buyer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    provider_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    note: Optional[str] = Field(default=None, max_length=1000)
+    status: OrderStatus = Field(default=OrderStatus.REQUESTED)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+    @property
+    def id(self) -> uuid.UUID:
+        return self.order_id
+
 
 # class Category(SQLModel, table=True):
 #     __tablename__ = "category"
@@ -219,3 +253,20 @@ class Message(SQLModel, table=True):
     attachment_url: Optional[str] = Field(default=None, max_length=2048)
     attachment_type: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+
+class StudentVerification(SQLModel, table=True):
+    __tablename__ = "student_verification"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user_account.clerk_id", unique=True, index=True)
+    status: VerificationStatus = Field(default=VerificationStatus.unverified)
+    method: str | None = None  # "edu_email" or "document"
+    school_email: str | None = None
+    email_code_hash: str | None = None
+    email_code_expires_at: datetime | None = None
+    email_send_attempts: int = 0
+    last_email_sent_at: datetime | None = None
+    document_url: str | None = None
+    reviewed_by: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    verified_at: datetime | None = None
