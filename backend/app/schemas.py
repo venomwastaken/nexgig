@@ -73,7 +73,7 @@ class UserProfileRead(SQLModel):
 # ---------- UserSkill ----------
 
 class UserSkillCreate(SQLModel):
-    category: str
+    category_name: str
     skill_name: str
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Decimal = Field(gt=0)
@@ -81,7 +81,7 @@ class UserSkillCreate(SQLModel):
 
 
 class UserSkillUpdate(SQLModel):
-    category: Optional[str] = None
+    category_name: Optional[str] = None
     skill_name: Optional[str] = None
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Optional[Decimal] = Field(default=None, gt=0)
@@ -91,7 +91,7 @@ class UserSkillUpdate(SQLModel):
 class UserSkillRead(SQLModel):
     skill_id: uuid.UUID
     user_id: uuid.UUID
-    category: str
+    category_name: str
     skill_name: str
     description: Optional[str] = None
     hourly_rate_token_cost: Decimal
@@ -132,20 +132,22 @@ class GigBase(SQLModel):
     description: str
     price: float
     banner_url: Optional[str] = None
+    turnaround_time: str
 
 # Schema for creating a gig
 class GigCreate(GigBase):
     tags: List[str] = []
-    category_id: Optional[uuid.UUID] = None
+    category_name: str 
 
 # Schema for modifying mutable gig fields
 class GigUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-    category_id: Optional[uuid.UUID] = None
+    category_name: Optional[str] = None
     tag_ids: Optional[List[uuid.UUID]] = None
     banner_url: Optional[str] = None
+    turnaround_time: Optional[str] = None
 
 # Schema for updating just the lifecycle state
 class GigStatusUpdate(SQLModel):
@@ -159,11 +161,11 @@ class TagRead(SQLModel):
     class Config:
         from_attributes = True
 
-class CategoryRead(SQLModel):
-    name: str
+# class CategoryRead(SQLModel):
+#     name: str
 
-    class Config:
-        from_attributes = True
+#     class Config:
+#         from_attributes = True
 
 class ProviderRead(SQLModel):
     user_id: uuid.UUID
@@ -187,7 +189,7 @@ class GigRead(GigBase):
     rejection_reason: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     reviewed_by_id: Optional[UUID] = None
-    category: Optional[CategoryRead] = None
+    category_name: str
 
     class Config:
         from_attributes = True

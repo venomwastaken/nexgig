@@ -18,6 +18,19 @@ export const CATEGORIES: Category[] = [
     { label: "Other", value: "other" },
 ];
 
+export type DeliveryOption = {
+    label: string;
+    value: string;
+};
+
+export const DELIVERY_OPTIONS: DeliveryOption[] = [
+    { label: "1 day", value: "1 day" },
+    { label: "3 days", value: "3 days" },
+    { label: "1 week", value: "1 week" },
+    { label: "2 weeks", value: "2 weeks" },
+    { label: "1 month", value: "1 month" },
+];
+
 export type Gig =   {
     title: string,
     description: string,
@@ -37,13 +50,48 @@ export type Gig =   {
     // rejection_reason: string,
     // reviewed_at: string,
     // reviewed_by_id: string,
-    category: string
+    category: string,
+    banner_url?: string | null
     // {
     //   category_id: string,
     //   name: string,
     //   description: string
     // }
   }
+
+// Shape returned by the backend's GigRead schema (backend/app/schemas.py).
+export type ApiGig = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  banner_url?: string | null;
+  provider: Gig["provider"] | null;
+  status: string;
+  created_at: string;
+  tags: { id: number; name: string }[];
+  category: { name: string } | null;
+};
+
+export function mapApiGigToGig(g: ApiGig): Gig {
+  return {
+    id: g.id,
+    title: g.title,
+    description: g.description,
+    price: g.price,
+    banner_url: g.banner_url,
+    provider: g.provider ?? {
+      user_id: "",
+      first_name: "Unknown",
+      last_name: "Provider",
+      username: "unknown",
+    },
+    status: g.status,
+    created_at: g.created_at,
+    tags: g.tags.map((t) => t.name),
+    category: g.category?.name ?? "Other",
+  };
+}
 
 
 // {

@@ -1,6 +1,6 @@
 """add conversation and message tables
 
-Revision ID: 480170f3eba4
+Revision ID: b78cd923860d
 Revises: 9d58e41baab8
 Create Date: 2026-08-01 02:19:04.260560
 
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '480170f3eba4'
+revision: str = 'b78cd923860d'
 down_revision: Union[str, Sequence[str], None] = '9d58e41baab8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
