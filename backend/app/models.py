@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, ForeignKey, Numeric, String, Boolean
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 
 class GigStatus(str, Enum):
@@ -130,11 +130,16 @@ class UserSkillLink(SQLModel, table=True):
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
+    #one time review for a customer per gig
+    __table_args__ = (
+
+        UniqueConstraint("gig_id", "reviewer_id", name="uq_user_review_gig_reviewer"),
+    )
 
     review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     reviewer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
     reviewee_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    service_id: uuid.UUID   
+    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", index=True)
     rating: int
     comment: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -190,15 +195,9 @@ class Gig(SQLModel, table=True):
 # class Category(SQLModel, table=True):
 #     __tablename__ = "category"
 
-<<<<<<< HEAD
-    category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    name: str = Field(unique=True, index=True)
-    description: Optional[str] = Field(default=None)
-=======
 #     category_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 #     name: str = Field(unique=True, index=True)
 #     description: Optional[str] = Field(default=None)
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 
 
 class Tag(SQLModel, table=True):
@@ -218,50 +217,6 @@ class GigTagLink(SQLModel, table=True):
     gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
     tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)
 
-<<<<<<< HEAD
-class Booking(SQLModel, table=True):
-    __tablename__ = "booking"
-
-    booking_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    listing_id: uuid.UUID = Field(
-        sa_column=Column(
-            ForeignKey("gig.gig_id", name="fk_booking_listing_id_gig"),
-            nullable=False,
-            index=True,
-        )
-    )
-    client_id: uuid.UUID = Field(
-        sa_column=Column(
-            ForeignKey("user_account.user_id", name="fk_booking_client_id_user_account"),
-            nullable=False,
-            index=True,
-        )
-    )
-    freelancer_id: uuid.UUID = Field(
-        sa_column=Column(
-            ForeignKey("user_account.user_id", name="fk_booking_freelancer_id_user_account"),
-            nullable=False,
-            index=True,
-        )
-    )
-    status: BookingStatus = Field(default=BookingStatus.pending)
-    message: Optional[str] = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
-
-    listing: Optional["Gig"] = Relationship(
-        back_populates="bookings",
-        sa_relationship_kwargs={"foreign_keys": "Booking.listing_id"},
-    )
-    client: Optional["UserAccount"] = Relationship(
-        back_populates="bookings_as_client",
-        sa_relationship_kwargs={"foreign_keys": "Booking.client_id"},
-    )
-    freelancer: Optional["UserAccount"] = Relationship(
-        back_populates="bookings_as_freelancer",
-        sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
-    )
-=======
 
 class Conversation(SQLModel, table=True):
     __tablename__ = "conversation"
@@ -289,4 +244,3 @@ class Message(SQLModel, table=True):
     attachment_url: Optional[str] = Field(default=None, max_length=2048)
     attachment_type: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8

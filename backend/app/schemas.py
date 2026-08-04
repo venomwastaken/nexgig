@@ -4,6 +4,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
+from sqlmodel import SQLModel
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -71,26 +72,16 @@ class UserProfileRead(BaseModel):
 
 # ---------- UserSkill ----------
 
-<<<<<<< HEAD
-class UserSkillCreate(BaseModel):
-    category: str
-=======
 class UserSkillCreate(SQLModel):
     category_name: str
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
     skill_name: str
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Decimal = Field(gt=0)
     is_active: bool = True
 
 
-<<<<<<< HEAD
-class UserSkillUpdate(BaseModel):
-    category: Optional[str] = None
-=======
 class UserSkillUpdate(SQLModel):
     category_name: Optional[str] = None
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
     skill_name: Optional[str] = None
     description: Optional[str] = Field(default=None, max_length=1000)
     hourly_rate_token_cost: Optional[Decimal] = Field(default=None, gt=0)
@@ -169,12 +160,6 @@ class TagRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-<<<<<<< HEAD
-class CategoryRead(BaseModel):
-    category_id: uuid.UUID
-    name: str
-    description: Optional[str] = None
-=======
 # class CategoryRead(SQLModel):
 #     name: str
 
@@ -187,7 +172,6 @@ class ProviderRead(SQLModel):
     last_name: str
     username: str
     avatar_url: Optional[str] = None
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -208,27 +192,6 @@ class GigRead(GigBase):
     class Config:
         from_attributes = True
 
-<<<<<<< HEAD
-# ---------- Enums ----------
-
-class AccountStatus(str, Enum):
-    active = "active"
-    suspended = "suspended"
-
-class AdminUser(BaseModel):
-    id: int
-    email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    role: Optional[str] = None
-    status: AccountStatus
-    is_admin: bool = False
-
-    model_config = ConfigDict(from_attributes=True)
-
-class UserStatusUpdate(BaseModel):
-    status: AccountStatus
-=======
 
 # ---------- Messaging ----------
 
@@ -266,5 +229,4 @@ class AttachmentPresignResponse(SQLModel):
     upload_url: str
     object_url: str
     object_key: str
->>>>>>> b4a90e1d79555041a4ba0db59c910ed4a5205ab8
 
