@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
-from app.models import GigStatus
+from app.models import GigStatus, OrderStatus
 
 from sqlmodel import Field, SQLModel
 from uuid import UUID
@@ -193,6 +193,30 @@ class GigRead(GigBase):
 
     class Config:
         from_attributes = True
+
+
+# ---------- Orders (a buyer booking a gig) ----------
+
+class OrderCreate(SQLModel):
+    gig_id: uuid.UUID
+    note: Optional[str] = Field(default=None, max_length=1000)
+
+
+class OrderStatusUpdate(SQLModel):
+    status: OrderStatus
+
+
+class OrderRead(SQLModel):
+    id: uuid.UUID
+    gig_id: uuid.UUID
+    gig_title: str
+    buyer: ProviderRead
+    provider_id: uuid.UUID
+    price: Decimal
+    note: Optional[str] = None
+    status: OrderStatus
+    created_at: datetime
+    updated_at: datetime
 
 
 # ---------- Messaging ----------

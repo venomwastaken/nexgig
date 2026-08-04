@@ -186,7 +186,7 @@ export default function LoginPage({
                 New here?{" "}
                 <button
                     type="button"
-                    onClick={onNavigateToSignUp}
+                    onClick={() => navigate("/signup")}
                     className="text-[#1b976f] hover:underline underline-offset-4"
                 >
                     Create an account

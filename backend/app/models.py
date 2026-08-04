@@ -18,6 +18,13 @@ class GigApprovalStatus(str, Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
 
+class OrderStatus(str, Enum):
+    REQUESTED = "requested"
+    CONFIRMED = "confirmed"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
 class AccountStatus(str, Enum):
     PENDING_VERIFICATION = "pending_verification"
     ACTIVE = "active"
@@ -165,6 +172,28 @@ class Gig(SQLModel, table=True):
     @property
     def provider_id(self) -> uuid.UUID:
         return self.user_id
+
+    @property
+    def provider(self) -> Optional["UserProfile"]:
+        return self.user.profile if self.user else None
+
+
+class GigOrder(SQLModel, table=True):
+    __tablename__ = "gig_order"
+
+    order_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", index=True)
+    buyer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    provider_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    note: Optional[str] = Field(default=None, max_length=1000)
+    status: OrderStatus = Field(default=OrderStatus.REQUESTED)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+    @property
+    def id(self) -> uuid.UUID:
+        return self.order_id
 
 
 # class Category(SQLModel, table=True):

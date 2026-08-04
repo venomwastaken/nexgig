@@ -54,7 +54,7 @@ export default function Gigs() {
 
     const filtered = useMemo(() => {
         return gigs.filter((g) => {
-            if (cat !== "All" && g.category.toLowerCase() !== cat.toLowerCase()) return false;
+            if (cat !== "All" && g.category_name.toLowerCase() !== cat.toLowerCase()) return false;
             if (!q.trim()) return true;
             const needle = q.toLowerCase();
             return (
@@ -235,7 +235,7 @@ export function GigCard({ gig }: { gig: Gig }) {
             to={`/gigs/${gig.id}`}
             className="group rounded-2xl border border-border bg-card p-2 hover:border-primary/60 transition-colors flex flex-col gap-1"
         >
-            <AspectRatio ratio={16 / 9} className="relative">
+            <AspectRatio ratio={16 / 9} className="relative *:rounded-lg overflow-hidden">
                 <img
                     src={gig.banner_url || "../../assets/npc_image.jpeg"}
                     alt="Image"

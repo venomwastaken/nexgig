@@ -14,7 +14,6 @@ import { useSignUp } from "@clerk/react";
 import { CustomGoogleOneTap, useGoogleOneTap } from "@/components/GoogleOneTap";
 import { useNavigate } from "react-router-dom";
 
-
 const formSchema = z
     .object({
         email: z.string().email("Enter a valid email"),
@@ -38,7 +37,7 @@ function SignUpPageContent() {
     const [error, setError] = useState<string | null>(null);
     const { signUp } = useSignUp();
     const { startGoogleOneTap } = useGoogleOneTap();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     const signUpForm = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -68,7 +67,22 @@ function SignUpPageContent() {
                 throw new Error(error.message);
             }
 
-            navigate('/onboarding/profile')
+            // signUp.password() only advances the sign-up attempt — it does
+            // NOT activate a session by itself, same as signIn.password().
+            // Without finalize(), RequireAuth still sees isSignedIn === false
+            // and bounces the freshly "signed up" user straight back to /login.
+            if (signUp.status === "complete") {
+                const { error: finalizeError } = await signUp.finalize();
+                if (finalizeError) {
+                    throw new Error(finalizeError.message);
+                }
+            } else {
+                throw new Error(
+                    "Additional verification is required to finish signing up.",
+                );
+            }
+
+            navigate("/onboarding/profile");
         } catch (err) {
             setError(
                 err instanceof Error
@@ -116,7 +130,6 @@ function SignUpPageContent() {
                         {error}
                     </div>
                 )}
-
                 <Field>
                     <Button
                         type="button"
@@ -199,7 +212,6 @@ function SignUpPageContent() {
                         </Field>
                     )}
                 />
-
                 <label className="mt-8 flex items-start gap-2 text-sm text-[#8B8F9B] cursor-pointer select-none">
                     <Checkbox
                         checked={agreementChecked}
@@ -223,6 +235,11 @@ function SignUpPageContent() {
                         .
                     </span>
                 </label>
+
+                {/* Target for Clerk's bot-protection widget (Smart/Invisible CAPTCHA).
+                    Without this element, Clerk silently falls back to Invisible
+                    CAPTCHA and can't render a visible challenge if one is required. */}
+                <div id="clerk-captcha" />
 
                 <Button
                     type="submit"
