@@ -14,18 +14,33 @@ interface StatsRowProps {
   availableBalance: number;
   inEscrow: number;
   activeGigs: number;
+  pendingReview: number;
   needsReply: number;
-  rating: number;
-  reviewCount: number;
 }
 
-export default function StatsRow({ availableBalance, inEscrow, activeGigs, needsReply, rating, reviewCount }: StatsRowProps) {
+export default function StatsRow({
+  availableBalance,
+  inEscrow,
+  activeGigs,
+  pendingReview,
+  needsReply,
+}: StatsRowProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <StatCard label="Available balance" value={`GH₵ ${availableBalance.toLocaleString()}`} sub="Ready to withdraw" accent="#1b976f" />
       <StatCard label="In escrow" value={`GH₵ ${inEscrow.toLocaleString()}`} sub="Releases on delivery" />
-      <StatCard label="Active gigs" value={String(activeGigs)} sub={needsReply > 0 ? `${needsReply} needs a reply` : "All caught up"} accent={needsReply > 0 ? "#d9a441" : undefined} />
-      <StatCard label="Rating" value={rating.toFixed(1)} sub={`Based on ${reviewCount} reviews`} />
+      <StatCard
+        label="Active gigs"
+        value={String(activeGigs)}
+        sub={needsReply > 0 ? `${needsReply} needs a reply` : "All caught up"}
+        accent={needsReply > 0 ? "#d9a441" : undefined}
+      />
+      <StatCard
+        label="Pending review"
+        value={String(pendingReview)}
+        sub={pendingReview > 0 ? "Awaiting admin approval" : "All caught up"}
+        accent={pendingReview > 0 ? "#d9a441" : undefined}
+      />
     </div>
   );
 }

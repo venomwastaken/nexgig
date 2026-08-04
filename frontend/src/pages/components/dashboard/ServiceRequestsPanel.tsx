@@ -1,13 +1,13 @@
-import { Trash2 } from "lucide-react";
+import { X } from "lucide-react";
 import {
-  ServiceRequest,
-  REQUEST_STATUS_LABELS,
-  REQUEST_STATUS_COLORS,
+  IncomingRequest,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_COLORS,
+  nextOrderStatus,
 } from "./types";
-import { nextStatus } from "./derive";
 
 interface ServiceRequestsPanelProps {
-  requests: ServiceRequest[];
+  requests: IncomingRequest[];
   onCancel?: (id: string) => void;
   onAdvance?: (id: string) => void;
 }
@@ -26,46 +26,53 @@ export default function ServiceRequestsPanel({
 
       {requests.length === 0 ? (
         <p className="text-xs text-[#8a8a8a] py-4 text-center">
-          No service requests yet.
+          No one has requested your gigs yet.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {requests.map((r) => {
-            const upcoming = nextStatus(r.status);
+            const upcoming = nextOrderStatus(r.status);
             return (
               <div
                 key={r.id}
                 className="border border-[#2a2a2a] rounded-lg p-3.5 flex flex-col gap-2"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-[#f5f5f4]">{r.title}</p>
+                  <p className="text-sm font-medium text-[#f5f5f4] line-clamp-1">
+                    {r.gigTitle}
+                  </p>
                   {r.status === "requested" && (
                     <button
                       onClick={() => onCancel?.(r.id)}
-                      title="Only pending requests can be removed"
+                      title="Decline this request"
                       className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-[#2a2a2a] transition-colors shrink-0"
                     >
-                      <Trash2 size={12} className="text-[#ef4444]" />
+                      <X size={12} className="text-[#ef4444]" />
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-[#8a8a8a]">{r.client}</p>
+                <p className="text-xs text-[#8a8a8a]">
+                  {r.buyerName} · GH₵ {r.price.toLocaleString()}
+                </p>
+                {r.note && (
+                  <p className="text-xs text-[#8a8a8a] line-clamp-2 italic">"{r.note}"</p>
+                )}
                 <div className="flex items-center justify-between mt-1">
                   <span
                     className="text-[10px] font-medium px-2 py-0.5 rounded-full"
                     style={{
-                      backgroundColor: `${REQUEST_STATUS_COLORS[r.status]}1a`,
-                      color: REQUEST_STATUS_COLORS[r.status],
+                      backgroundColor: `${ORDER_STATUS_COLORS[r.status]}1a`,
+                      color: ORDER_STATUS_COLORS[r.status],
                     }}
                   >
-                    {REQUEST_STATUS_LABELS[r.status]}
+                    {ORDER_STATUS_LABELS[r.status]}
                   </span>
                   {upcoming && (
                     <button
                       onClick={() => onAdvance?.(r.id)}
                       className="text-[11px] font-medium text-[#1b976f] hover:text-[#22b384] transition-colors"
                     >
-                      Mark {REQUEST_STATUS_LABELS[upcoming].toLowerCase()} →
+                      Mark {ORDER_STATUS_LABELS[upcoming].toLowerCase()} →
                     </button>
                   )}
                 </div>

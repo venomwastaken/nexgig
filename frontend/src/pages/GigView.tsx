@@ -6,6 +6,7 @@ import { ApiGig, Gig, mapApiGigToGig } from "@/lib/gigs";
 import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
 import { useApi } from "@/hooks/useApi";
+import axios from "axios";
 import {
     ArrowLeft,
     Clock,
@@ -254,11 +255,15 @@ function BookingPanel({ gig }: { gig: Gig }) {
     async function handleBook() {
         setSubmitting(true);
         try {
-            // No booking endpoint exists on the backend yet — this simulates
-            // the request going out so the flow can be wired up later.
-            await new Promise((resolve) => setTimeout(resolve, 600));
+            await api.post("/orders/", { gig_id: gig.id, note: note.trim() || undefined });
             toast.success("Booking request sent to the provider!");
             setNote("");
+        } catch (error) {
+            const message =
+                axios.isAxiosError(error) && error.response?.data?.detail
+                    ? String(error.response.data.detail)
+                    : "Couldn't send this request. Please try again.";
+            toast.error(message);
         } finally {
             setSubmitting(false);
         }

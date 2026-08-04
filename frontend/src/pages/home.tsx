@@ -100,9 +100,9 @@ export default function Home() {
 
           {/* Orbit graphic */}
           <div className="relative mx-auto grid h-64 w-full max-w-sm place-items-center md:h-80">
-            <div className="absolute inset-0 rotate-18 rounded-[50%] border border-white/[0.08]" />
-            <div className="absolute inset-4 rotate-[-8deg] rounded-[50%] border border-white/[0.08]" />
-            <div className="absolute inset-10 rotate-35 rounded-[50%] border border-white/[0.08]" />
+            <div className="absolute inset-0 rotate-18 rounded-[50%] border border-white/8" />
+            <div className="absolute inset-4 rotate-[-8deg] rounded-[50%] border border-white/8" />
+            <div className="absolute inset-10 rotate-35 rounded-[50%] border border-white/8" />
             <div
               className="grid h-24 w-24 place-items-center rounded-2xl border"
               style={{
@@ -122,7 +122,7 @@ export default function Home() {
         </section>
 
         {/* Trust row */}
-        <section className="flex flex-wrap items-center justify-between gap-6 border-y border-white/[0.08] py-8 text-xs uppercase tracking-[0.18em] text-[#9a9a9a]">
+        <section className="flex flex-wrap items-center justify-between gap-6 border-y border-white/8 py-8 text-xs uppercase tracking-[0.18em] text-[#9a9a9a]">
           {["Design", "Tutoring", "Video", "Code", "Photography", "Errands"].map(
             (c) => (
               <span key={c}>{c}</span>
@@ -141,7 +141,7 @@ export default function Home() {
             {services.map((s) => (
               <div
                 key={s.title}
-                className="flex min-h-[200px] flex-col justify-between rounded-lg border border-white/[0.08] bg-[#232323] p-7 transition-colors hover:border-white/[0.18]"
+                className="flex min-h-50 flex-col justify-between rounded-lg border border-white/8 bg-[#232323] p-7 transition-colors hover:border-white/18"
               >
                 <div>
                   <h3 className="text-lg font-semibold leading-snug">
@@ -161,7 +161,7 @@ export default function Home() {
 
         {/* CTA */}
         <section className="pb-16">
-          <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-[#232323] p-8 md:p-12">
+          <div className="relative overflow-hidden rounded-lg border border-white/8 bg-[#232323] p-8 md:p-12">
             <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
               Let&apos;s make things happen
             </h2>
@@ -178,8 +178,8 @@ export default function Home() {
             </Link>
             <div className="pointer-events-none absolute inset-y-0 right-10 hidden place-items-center md:grid">
               <div className="relative h-40 w-40">
-                <div className="absolute inset-0 rotate-12 rounded-[50%] border border-white/[0.08]" />
-                <div className="absolute inset-6 -rotate-6 rounded-[50%] border border-white/[0.08]" />
+                <div className="absolute inset-0 rotate-12 rounded-[50%] border border-white/8" />
+                <div className="absolute inset-6 -rotate-6 rounded-[50%] border border-white/8" />
                 <div
                   className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full"
                   style={{ backgroundColor: "rgba(27,151,111,0.18)" }}
@@ -204,7 +204,7 @@ export default function Home() {
             {caseStudies.map((c) => (
               <div
                 key={c}
-                className="rounded-lg border border-white/[0.08] bg-[#232323] p-6"
+                className="rounded-lg border border-white/8 bg-[#232323] p-6"
               >
                 <p className="text-sm leading-relaxed text-[#9a9a9a]">{c}</p>
                 <Link
