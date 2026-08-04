@@ -11,7 +11,7 @@ from app.api.v1.endpoints.users import get_or_create_user
 
 router = APIRouter()
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
  
  

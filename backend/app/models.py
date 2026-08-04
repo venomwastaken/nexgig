@@ -31,6 +31,11 @@ class AccountStatus(str, Enum):
     SUSPENDED = "suspended"
     DEACTIVATED = "deactivated"
 
+class VerificationStatus(str, Enum):
+    unverified = "unverified"
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
 
 class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
@@ -248,3 +253,20 @@ class Message(SQLModel, table=True):
     attachment_url: Optional[str] = Field(default=None, max_length=2048)
     attachment_type: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+
+class StudentVerification(SQLModel, table=True):
+    __tablename__ = "student_verification"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user_account.clerk_id", unique=True, index=True)
+    status: VerificationStatus = Field(default=VerificationStatus.unverified)
+    method: str | None = None  # "edu_email" or "document"
+    school_email: str | None = None
+    email_code_hash: str | None = None
+    email_code_expires_at: datetime | None = None
+    email_send_attempts: int = 0
+    last_email_sent_at: datetime | None = None
+    document_url: str | None = None
+    reviewed_by: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    verified_at: datetime | None = None
