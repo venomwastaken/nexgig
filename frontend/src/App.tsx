@@ -18,6 +18,7 @@ import AboutUs from './pages/AboutUs';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
+import NotificationsPage from './pages/NotificationsPage';
 
 export default function App() {
     return (
@@ -93,6 +94,14 @@ export default function App() {
                         element={
                             <RequireAuth>
                                 <Messages />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/notifications"
+                        element={
+                            <RequireAuth>
+                                <NotificationsPage />
                             </RequireAuth>
                         }
                     />

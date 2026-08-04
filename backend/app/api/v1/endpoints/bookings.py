@@ -9,9 +9,20 @@ from sqlmodel import Session, select
 
 from app.auth import get_current_user
 from app.core.database import get_db
-from app.models import Booking, BookingStatus, Gig, GigApprovalStatus, UserAccount
+from app.models import Booking, BookingStatus, Gig, GigApprovalStatus, UserAccount, UserProfile, NotificationType
+from app.services.notification_copy import booking_created_copy, booking_status_copy
+from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
+
+
+def _display_name(session: Session, user_id: uuid.UUID, fallback: str) -> str:
+    profile = session.exec(select(UserProfile).where(UserProfile.user_id == user_id)).first()
+    if profile:
+        if profile.username:
+            return profile.username
+        return f"{profile.first_name} {profile.last_name}".strip()
+    return fallback
 
 
 class BookingCreate(BaseModel):
@@ -51,6 +62,20 @@ def create_booking(
     session.add(booking)
     session.commit()
     session.refresh(booking)
+
+    notification_service = NotificationService(session)
+    actor_name = _display_name(session, current_user.user_id, current_user.email)
+    title, body = booking_created_copy(actor_name, listing.title)
+    notification_service.create(
+        recipient_id=listing.user_id,
+        actor_id=current_user.user_id,
+        type=NotificationType.BOOKING_CREATED,
+        title=title,
+        body=body,
+        entity_type="booking",
+        entity_id=str(booking.booking_id),
+        link=f"/bookings/{booking.booking_id}",
+    )
     return booking
 
 
@@ -107,4 +132,24 @@ def update_booking_status(
     session.add(booking)
     session.commit()
     session.refresh(booking)
+
+    listing = session.get(Gig, booking.listing_id)
+    actor_name = _display_name(session, current_user.user_id, current_user.email)
+    recipient_id = booking.freelancer_id if current_user.user_id == booking.client_id else booking.client_id
+    title, body = booking_status_copy(requested, actor_name, listing.title if listing else "your booking")
+    NotificationService(session).create(
+        recipient_id=recipient_id,
+        actor_id=current_user.user_id,
+        type={
+            BookingStatus.accepted: NotificationType.BOOKING_ACCEPTED,
+            BookingStatus.declined: NotificationType.BOOKING_DECLINED,
+            BookingStatus.completed: NotificationType.BOOKING_COMPLETED,
+            BookingStatus.cancelled: NotificationType.BOOKING_CANCELLED,
+        }.get(requested, NotificationType.SYSTEM),
+        title=title,
+        body=body,
+        entity_type="booking",
+        entity_id=str(booking.booking_id),
+        link=f"/bookings/{booking.booking_id}",
+    )
     return booking

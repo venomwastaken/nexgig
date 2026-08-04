@@ -329,6 +329,34 @@ class Message(SQLModel, table=True):
     attachment_type: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
+
+class NotificationType(str, Enum):
+    MESSAGE = "message"
+    BOOKING_CREATED = "booking_created"
+    BOOKING_ACCEPTED = "booking_accepted"
+    BOOKING_DECLINED = "booking_declined"
+    BOOKING_COMPLETED = "booking_completed"
+    BOOKING_CANCELLED = "booking_cancelled"
+    ADMIN_UPDATE = "admin_update"
+    SYSTEM = "system"
+
+
+class Notification(SQLModel, table=True):
+    __tablename__ = "notifications"
+
+    id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    recipient_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    actor_id: Optional[UUID] = Field(default=None, foreign_key="user_account.user_id")
+    type: NotificationType = Field(sa_column=Column(String, index=True))
+    title: str
+    body: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    link: Optional[str] = None
+    is_read: bool = Field(default=False, index=True)
+    read_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+
 class StudentVerification(SQLModel, table=True):
     __tablename__ = "student_verification"
 

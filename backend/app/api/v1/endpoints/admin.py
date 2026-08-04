@@ -8,8 +8,9 @@ from sqlmodel import Session, select
 
 from app.api.v1.endpoints.users import get_or_create_user
 from app.core.database import get_db
-from app.models import AccountStatus, Gig, GigApprovalStatus, UserAccount
+from app.models import AccountStatus, Gig, GigApprovalStatus, NotificationType, UserAccount
 from app.schemas import GigRead
+from app.services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -20,6 +21,13 @@ class RejectGigRequest(BaseModel):
 
 class UserStatusUpdate(BaseModel):
     status: AccountStatus
+
+
+class BroadcastNotificationIn(BaseModel):
+    title: str
+    body: str
+    link: Optional[str] = None
+    user_ids: Optional[List[UUID]] = None
 
 
 # --- Security Dependency ---
@@ -131,3 +139,27 @@ def update_user_status(
     session.commit()
     session.refresh(user)
     return user
+
+
+@router.post("/notifications/broadcast")
+def broadcast_notification(
+    payload: BroadcastNotificationIn,
+    _admin: UserAccount = Depends(require_admin),
+    session: Session = Depends(get_db),
+):
+    if payload.user_ids is None:
+        recipients = session.exec(select(UserAccount)).all()
+        user_ids = [user.user_id for user in recipients]
+    else:
+        user_ids = payload.user_ids
+
+    service = NotificationService(session)
+    for user_id in user_ids:
+        service.create(
+            recipient_id=user_id,
+            type=NotificationType.ADMIN_UPDATE,
+            title=payload.title,
+            body=payload.body,
+            link=payload.link,
+        )
+    return {"sent": len(user_ids)}
