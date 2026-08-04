@@ -2,7 +2,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
+
+
+from pydantic import BaseModel, field_validator
 from app.models import GigStatus, OrderStatus
+
 
 from sqlmodel import Field, SQLModel
 from uuid import UUID
@@ -41,13 +45,18 @@ class UserWalletRead(BaseModel):
 
 # ---------- UserProfile ----------
 
-class UserProfileCreate(BaseModel):
+class UsernameAvailabilityRead(SQLModel):
+    available: bool
+
+
+class UserProfileCreate(SQLModel):
     first_name: str
     last_name: str
     username: str
     dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
@@ -55,8 +64,10 @@ class UserProfileUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = None
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     updated_at: Optional[datetime] = None
 
 
@@ -66,8 +77,10 @@ class UserProfileRead(BaseModel):
     first_name: str
     last_name: str
     username: str
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
+    university: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -255,4 +268,31 @@ class AttachmentPresignResponse(SQLModel):
     upload_url: str
     object_url: str
     object_key: str
+
+class EmailRequestIn(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        if not isinstance(value, str):
+            raise TypeError("email must be a string")
+        value = value.strip()
+        if not value or "@" not in value:
+            raise ValueError("invalid email")
+        return value
+
+
+class EmailConfirmIn(BaseModel):
+    code: str
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, value: str) -> str:
+        if not isinstance(value, str):
+            raise TypeError("code must be a string")
+        value = value.strip()
+        if not value:
+            raise ValueError("code is required")
+        return value
 

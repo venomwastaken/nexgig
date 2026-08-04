@@ -1,9 +1,7 @@
-import ProfileForm from "@/components/ProfileForm";
-
-
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 export default function ProfileFormPage() {
   return (
-    <ProfileForm />
+    <OnboardingWizard />
   )
 }
