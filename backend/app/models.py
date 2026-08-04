@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
+from uuid import UUID
 
-from sqlalchemy import Column, Numeric
-from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import Column, ForeignKey, Numeric, String, Boolean
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 
 class GigStatus(str, Enum):
@@ -26,10 +27,17 @@ class OrderStatus(str, Enum):
     CANCELLED = "cancelled"
 
 class AccountStatus(str, Enum):
-    PENDING_VERIFICATION = "pending_verification"
-    ACTIVE = "active"
-    SUSPENDED = "suspended"
-    DEACTIVATED = "deactivated"
+    active = "active"
+    suspended = "suspended"
+    deactivated = "deactivated"
+    pending_verification = "pending_verification"
+
+class BookingStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    declined = "declined"
+    completed = "completed"
+    cancelled = "cancelled"
 
 class VerificationStatus(str, Enum):
     unverified = "unverified"
@@ -40,14 +48,14 @@ class VerificationStatus(str, Enum):
 class UserAccount(SQLModel, table=True):
     __tablename__ = "user_account"
 
-    user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     is_admin: bool = Field(default=False)
 
     # Synced/cached from Clerk
     email: str = Field(unique=True, index=True, nullable=False) 
 
-    university_id: Optional[uuid.UUID] = Field(default=None)
-    account_status: AccountStatus = Field(default=AccountStatus.PENDING_VERIFICATION)
+    university_id: Optional[UUID] = Field(default=None)
+    account_status: AccountStatus = Field(default=AccountStatus.active, nullable=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
     clerk_id: str = Field(unique=True, index=True, nullable=False)
@@ -71,13 +79,22 @@ class UserAccount(SQLModel, table=True):
         back_populates="reviewee",
         sa_relationship_kwargs={"foreign_keys": "UserReview.reviewee_id"},
     )
+    gig_comments: List["GigComment"] = Relationship(back_populates="user")
+    bookings_as_client: List["Booking"] = Relationship(
+        back_populates="client",
+        sa_relationship_kwargs={"foreign_keys": "Booking.client_id"},
+    )
+    bookings_as_freelancer: List["Booking"] = Relationship(
+        back_populates="freelancer",
+        sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
+    )
 
 
 class UserWallet(SQLModel, table=True):
     __tablename__ = "user_wallet"
 
-    wallet_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
+    wallet_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    user_id: UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     available_tokens: Decimal = Field(
         default=Decimal("0"), sa_column=Column(Numeric(12, 2), nullable=False)
     )
@@ -93,8 +110,8 @@ class UserWallet(SQLModel, table=True):
 class UserProfile(SQLModel, table=True):
     __tablename__ = "user_profile"
 
-    profile_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
+    profile_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    user_id: UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
     first_name: str
     last_name: str
     username: str = Field(default=None, unique=True, index=True)
@@ -112,25 +129,30 @@ class UserProfile(SQLModel, table=True):
 class Skill(SQLModel, table=True):
     __tablename__ = "skill"
 
-    skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    skill_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     name: str = Field(unique=True, index=True)
 
 
 class UserSkillLink(SQLModel, table=True):
     __tablename__ = "user_skill_link"
 
-    user_profile_id: uuid.UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
-    skill_id: uuid.UUID = Field(foreign_key="skill.skill_id", primary_key=True)
+    user_profile_id: UUID = Field(foreign_key="user_profile.profile_id", primary_key=True)
+    skill_id: UUID = Field(foreign_key="skill.skill_id", primary_key=True)
     profile: "UserProfile" = Relationship(back_populates="skill_links")
 
 
 class UserReview(SQLModel, table=True):
     __tablename__ = "user_review"
+    #one time review for a customer per gig
+    __table_args__ = (
 
-    review_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    reviewer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    reviewee_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    service_id: uuid.UUID   
+        UniqueConstraint("gig_id", "reviewer_id", name="uq_user_review_gig_reviewer"),
+    )
+
+    review_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    reviewer_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    reviewee_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    gig_id: UUID = Field(foreign_key="gig.gig_id", index=True)
     rating: int
     comment: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -149,18 +171,18 @@ class Gig(SQLModel, table=True):
     __tablename__ = "gig"
     
     approval_status: GigApprovalStatus = Field(default=GigApprovalStatus.PENDING)
-    reviewed_by_id: Optional[uuid.UUID] = Field(default=None, foreign_key="user_account.user_id")
+    reviewed_by_id: Optional[UUID] = Field(default=None, foreign_key="user_account.user_id")
     reviewed_at: Optional[datetime] = Field(default=None)
     rejection_reason: Optional[str] = Field(default=None, max_length=500)
     
-    gig_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     title: str
     description: str
     price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     status: GigStatus = Field(default=GigStatus.ACTIVE)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False)
-    user_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    user_id: UUID = Field(foreign_key="user_account.user_id", index=True)
     category_name: str = Field(index=True)
     banner_url: Optional[str] = Field(default=None)
     turnaround_time: str = Field(max_length=100)
@@ -168,6 +190,14 @@ class Gig(SQLModel, table=True):
     user: Optional["UserAccount"] = Relationship(
         back_populates="gigs",
         sa_relationship_kwargs={"foreign_keys": "Gig.user_id"},
+    )
+    bookings: List["Booking"] = Relationship(
+        back_populates="listing",
+        sa_relationship_kwargs={"foreign_keys": "Booking.listing_id"},
+    )
+    comments: List["GigComment"] = Relationship(
+        back_populates="gig",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
     @property
@@ -183,13 +213,36 @@ class Gig(SQLModel, table=True):
         return self.user.profile if self.user else None
 
 
+class Booking(SQLModel, table=True):
+    __tablename__ = "booking"
+
+    booking_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    listing_id: UUID = Field(foreign_key="gig.gig_id", index=True)
+    client_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    freelancer_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    status: BookingStatus = Field(default=BookingStatus.pending)
+    message: Optional[str] = Field(default=None, max_length=4000)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+    listing: Optional["Gig"] = Relationship(back_populates="bookings")
+    client: Optional["UserAccount"] = Relationship(
+        back_populates="bookings_as_client",
+        sa_relationship_kwargs={"foreign_keys": "Booking.client_id"},
+    )
+    freelancer: Optional["UserAccount"] = Relationship(
+        back_populates="bookings_as_freelancer",
+        sa_relationship_kwargs={"foreign_keys": "Booking.freelancer_id"},
+    )
+
+
 class GigOrder(SQLModel, table=True):
     __tablename__ = "gig_order"
 
-    order_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", index=True)
-    buyer_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    provider_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    order_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: UUID = Field(foreign_key="gig.gig_id", index=True)
+    buyer_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    provider_id: UUID = Field(foreign_key="user_account.user_id", index=True)
     price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     note: Optional[str] = Field(default=None, max_length=1000)
     status: OrderStatus = Field(default=OrderStatus.REQUESTED)
@@ -223,19 +276,41 @@ class Tag(SQLModel, table=True):
 class GigTagLink(SQLModel, table=True):
     __tablename__ = "gig_tag_link"
 
-    gig_id: uuid.UUID = Field(foreign_key="gig.gig_id", primary_key=True)
+    gig_id: UUID = Field(foreign_key="gig.gig_id", primary_key=True)
     tag_id: int | None = Field(foreign_key="tag.tag_id", primary_key=True)
+
+
+class GigComment(SQLModel, table=True):
+    __tablename__ = "gig_comment"
+
+    comment_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    gig_id: UUID = Field(foreign_key="gig.gig_id", index=True)
+    user_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    parent_comment_id: Optional[UUID] = Field(
+        default=None, foreign_key="gig_comment.comment_id", index=True
+    )
+    body: str = Field(max_length=2000)
+    is_edited: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+    gig: Optional["Gig"] = Relationship(back_populates="comments")
+    user: Optional["UserAccount"] = Relationship(back_populates="gig_comments")
+
+    @property
+    def id(self) -> UUID:
+        return self.comment_id
 
 
 class Conversation(SQLModel, table=True):
     __tablename__ = "conversation"
 
-    conversation_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    conversation_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     # Normalized unordered pair: user_a_id is always the smaller UUID (via uuid.UUID's
     # built-in comparison), so UNIQUE(user_a_id, user_b_id) guarantees exactly one
     # conversation per participant pair regardless of who messages first.
-    user_a_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
-    user_b_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    user_a_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    user_b_id: UUID = Field(foreign_key="user_account.user_id", index=True)
     gig_id: Optional[uuid.UUID] = Field(default=None, foreign_key="gig.gig_id", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     last_message_at: Optional[datetime] = Field(default=None, index=True)
@@ -246,13 +321,41 @@ class Conversation(SQLModel, table=True):
 class Message(SQLModel, table=True):
     __tablename__ = "message"
 
-    message_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    conversation_id: uuid.UUID = Field(foreign_key="conversation.conversation_id", index=True)
-    sender_id: uuid.UUID = Field(foreign_key="user_account.user_id", index=True)
+    message_id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    conversation_id: UUID = Field(foreign_key="conversation.conversation_id", index=True)
+    sender_id: UUID = Field(foreign_key="user_account.user_id", index=True)
     body: Optional[str] = Field(default=None, max_length=4000)
     attachment_url: Optional[str] = Field(default=None, max_length=2048)
     attachment_type: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+
+
+class NotificationType(str, Enum):
+    MESSAGE = "message"
+    BOOKING_CREATED = "booking_created"
+    BOOKING_ACCEPTED = "booking_accepted"
+    BOOKING_DECLINED = "booking_declined"
+    BOOKING_COMPLETED = "booking_completed"
+    BOOKING_CANCELLED = "booking_cancelled"
+    ADMIN_UPDATE = "admin_update"
+    SYSTEM = "system"
+
+
+class Notification(SQLModel, table=True):
+    __tablename__ = "notifications"
+
+    id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    recipient_id: UUID = Field(foreign_key="user_account.user_id", index=True)
+    actor_id: Optional[UUID] = Field(default=None, foreign_key="user_account.user_id")
+    type: NotificationType = Field(sa_column=Column(String, index=True))
+    title: str
+    body: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    link: Optional[str] = None
+    is_read: bool = Field(default=False, index=True)
+    read_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
 
 class StudentVerification(SQLModel, table=True):
     __tablename__ = "student_verification"
