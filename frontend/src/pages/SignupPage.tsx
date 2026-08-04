@@ -12,7 +12,7 @@ import { Field, FieldError, FieldSeparator } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSignUp } from "@clerk/react";
 import { CustomGoogleOneTap, useGoogleOneTap } from "@/components/GoogleOneTap";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const formSchema = z
     .object({
@@ -219,19 +219,19 @@ function SignUpPageContent() {
                     />
                     <span>
                         I agree to NexGig's{" "}
-                        <a
-                            href="#"
+                        <Link
+                            to="/terms"
                             className="text-[#1b976f] hover:underline underline-offset-4"
                         >
                             terms
-                        </a>{" "}
+                        </Link>{" "}
                         and{" "}
-                        <a
-                            href="#"
+                        <Link
+                            to="/terms"
                             className="text-[#1b976f] hover:underline underline-offset-4"
                         >
                             privacy policy
-                        </a>
+                        </Link>
                         .
                     </span>
                 </label>
