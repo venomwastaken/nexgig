@@ -6,11 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Generator, List, Optional
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, create_engine, func, select
- 
-from app.models import UserAccount, UserAccount, UserProfile
+
+from app.models import AccountStatus, UserAccount, UserProfile
 from app.schemas import UserAccountRead,UserAccountWithProfile,UserProfileCreate,UserProfileRead,UserProfileUpdate
 from app.auth import clerk_id_from_token, verify_clerk_token
 from app.core.database import get_db
+from app.moderation import heal_expired_suspension
 
 router = APIRouter()
 
@@ -38,9 +39,25 @@ def get_or_create_user_from_payload(payload: dict, db: Session) -> UserAccount:
 
     user = db.exec(select(UserAccount).where(UserAccount.clerk_id == clerk_id)).first()
     if user:
+        if user.is_banned:
+            raise HTTPException(status_code=403, detail="This account has been banned.")
+
+        healed = heal_expired_suspension(user)
+        if not healed and user.account_status == AccountStatus.SUSPENDED:
+            raise HTTPException(status_code=403, detail="This account is suspended.")
+
+        # Throttled so a chatty client doesn't turn every request into a write.
+        now = datetime.datetime.now(datetime.timezone.utc)
+        stale = user.last_login is None or (now - user.last_login) > datetime.timedelta(minutes=5)
+        if healed or stale:
+            if stale:
+                user.last_login = now
+            db.add(user)
+            db.commit()
+            db.refresh(user)
         return user
 
-    user = UserAccount(clerk_id=clerk_id, email=email)
+    user = UserAccount(clerk_id=clerk_id, email=email, last_login=datetime.datetime.now(datetime.timezone.utc))
     db.add(user)
     try:
         db.commit()
@@ -104,7 +121,10 @@ def get_me(
         user_id=current_user.user_id,
         email=current_user.email,
         account_status=current_user.account_status,
+        is_admin=current_user.is_admin,
+        role=current_user.role,
         created_at=current_user.created_at,
+        last_login=current_user.last_login,
         profile=_to_profile_read(profile),
         wallet=current_user.wallet,
     )

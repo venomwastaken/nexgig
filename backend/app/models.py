@@ -31,6 +31,11 @@ class AccountStatus(str, Enum):
     SUSPENDED = "suspended"
     DEACTIVATED = "deactivated"
 
+class UserRole(str, Enum):
+    USER = "user"
+    MODERATOR = "moderator"
+    ADMIN = "admin"
+
 class VerificationStatus(str, Enum):
     unverified = "unverified"
     pending = "pending"
@@ -42,13 +47,27 @@ class UserAccount(SQLModel, table=True):
 
     user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     is_admin: bool = Field(default=False)
+    role: UserRole = Field(default=UserRole.USER)
 
     # Synced/cached from Clerk
-    email: str = Field(unique=True, index=True, nullable=False) 
+    email: str = Field(unique=True, index=True, nullable=False)
 
     university_id: Optional[uuid.UUID] = Field(default=None)
     account_status: AccountStatus = Field(default=AccountStatus.PENDING_VERIFICATION)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    last_login: Optional[datetime] = Field(default=None)
+
+    # Moderation. `is_banned` is intentionally separate from `account_status` rather
+    # than a new enum member — it avoids an `ALTER TYPE ... ADD VALUE` migration on the
+    # existing Postgres `accountstatus` enum, which can't safely run inside the same
+    # transaction as other DDL on some Postgres versions.
+    is_banned: bool = Field(default=False)
+    ban_reason: Optional[str] = Field(default=None, max_length=500)
+    banned_at: Optional[datetime] = Field(default=None)
+    # Suspension reuses AccountStatus.SUSPENDED; these two fields carry the extra
+    # metadata (when it lifts, why) that the enum value alone can't express.
+    suspended_until: Optional[datetime] = Field(default=None)
+    suspension_reason: Optional[str] = Field(default=None, max_length=500)
 
     clerk_id: str = Field(unique=True, index=True, nullable=False)
 

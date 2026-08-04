@@ -7,6 +7,7 @@ import AccountPage from './pages/AccountPage';
 import CreateGig from './pages/CreateGig';
 import Layout from './components/Layout';
 import RequireAuth from '@/components/RequireAuth';
+import RequireAdmin from '@/components/RequireAdmin';
 import { Toaster } from '@/components/ui/sonner';
 import Gigs from './pages/Gigs';
 import GigView from './pages/GigView';
@@ -38,7 +39,9 @@ export default function App() {
                     path="/admin"
                     element={
                         <RequireAuth>
-                            <AdminDashboard />
+                            <RequireAdmin>
+                                <AdminDashboard />
+                            </RequireAdmin>
                         </RequireAuth>
                     }
                 />

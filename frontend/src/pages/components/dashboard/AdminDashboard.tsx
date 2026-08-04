@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useApi } from "@/hooks/useApi";
 import { ApiGigSubmission, GigSubmission, mapApiGigSubmission } from "./types";
 import GigReviewTable from "./GigReviewTable";
+import UserManagementPanel from "./users/UserManagementPanel";
 
 const AdminDashboard = () => {
   const api = useApi();
@@ -64,51 +65,64 @@ const AdminDashboard = () => {
   return (
     <main className="min-h-screen space-y-6 bg-background p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Gig review</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Admin dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Approve or reject newly posted gigs before they go live.
+          Moderate gig submissions and manage user accounts.
         </p>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-24">
-          <Loader2 className="animate-spin text-muted-foreground" size={24} />
-        </div>
-      ) : (
-        <Tabs defaultValue="pending">
-          <TabsList>
-            <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
-            <TabsTrigger value="approved">Approved ({counts.approved})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
-            <TabsTrigger value="all">All ({gigs.length})</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="gigs">
+        <TabsList>
+          <TabsTrigger value="gigs">Gig review</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="pending" className="mt-4">
-            <GigReviewTable
-              gigs={gigs.filter((g) => g.status === "pending")}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          </TabsContent>
-          <TabsContent value="approved" className="mt-4">
-            <GigReviewTable
-              gigs={gigs.filter((g) => g.status === "approved")}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          </TabsContent>
-          <TabsContent value="rejected" className="mt-4">
-            <GigReviewTable
-              gigs={gigs.filter((g) => g.status === "rejected")}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          </TabsContent>
-          <TabsContent value="all" className="mt-4">
-            <GigReviewTable gigs={gigs} onApprove={handleApprove} onReject={handleReject} />
-          </TabsContent>
-        </Tabs>
-      )}
+        <TabsContent value="gigs" className="mt-4">
+          {loading ? (
+            <div className="flex justify-center py-24">
+              <Loader2 className="animate-spin text-muted-foreground" size={24} />
+            </div>
+          ) : (
+            <Tabs defaultValue="pending">
+              <TabsList>
+                <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
+                <TabsTrigger value="approved">Approved ({counts.approved})</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
+                <TabsTrigger value="all">All ({gigs.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-4">
+                <GigReviewTable
+                  gigs={gigs.filter((g) => g.status === "pending")}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </TabsContent>
+              <TabsContent value="approved" className="mt-4">
+                <GigReviewTable
+                  gigs={gigs.filter((g) => g.status === "approved")}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </TabsContent>
+              <TabsContent value="rejected" className="mt-4">
+                <GigReviewTable
+                  gigs={gigs.filter((g) => g.status === "rejected")}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </TabsContent>
+              <TabsContent value="all" className="mt-4">
+                <GigReviewTable gigs={gigs} onApprove={handleApprove} onReject={handleReject} />
+              </TabsContent>
+            </Tabs>
+          )}
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-4">
+          <UserManagementPanel />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 };

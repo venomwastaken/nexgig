@@ -58,6 +58,8 @@ def test_admin_gig_review_flow():
             description="Needs review",
             price=50.0,
             user_id=uuid.UUID("00000000-0000-0000-0000-000000000102"),
+            category_name="Test",
+            turnaround_time="1-2 days",
             approval_status=GigApprovalStatus.PENDING,
             status=GigStatus.ACTIVE,
         )
@@ -86,6 +88,8 @@ def test_admin_gig_review_flow():
         description="Needs rejection",
         price=75.0,
         user_id=uuid.UUID("00000000-0000-0000-0000-000000000102"),
+        category_name="Test",
+        turnaround_time="1-2 days",
         approval_status=GigApprovalStatus.PENDING,
         status=GigStatus.ACTIVE,
     )
