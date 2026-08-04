@@ -2,7 +2,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Badge from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/textarea";
-import { GIGS } from "@/lib/gigs";
+import { ApiGig, Gig, mapApiGigToGig } from "@/lib/gigs";
 import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
 import { useApi } from "@/hooks/useApi";
@@ -10,10 +10,11 @@ import {
     ArrowLeft,
     Clock,
     Heart,
+    Loader2,
     MessageCircle,
     ShieldCheck,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -29,17 +30,66 @@ function timeAgo(iso: string) {
 
 export default function GigView() {
     const { id } = useParams<{ id: string }>();
-    const gig = GIGS.find((g) => g.id === id);
+    const api = useApi();
+    const [gig, setGig] = useState<Gig | null>(null);
+    const [otherGigs, setOtherGigs] = useState<Gig[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!id) return;
+        let cancelled = false;
+        setLoading(true);
+        setGig(null);
+        api
+            .get<ApiGig>(`/gigs/${id}`)
+            .then((res) => {
+                if (!cancelled) setGig(mapApiGigToGig(res.data));
+            })
+            .catch(() => {
+                if (!cancelled) setGig(null);
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    useEffect(() => {
+        let cancelled = false;
+        api
+            .get<ApiGig[]>("/gigs/search")
+            .then((res) => {
+                if (!cancelled) setOtherGigs(res.data.map(mapApiGigToGig));
+            })
+            .catch(() => {
+                // Similar gigs are a nice-to-have; ignore failures.
+            });
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const similarGigs = useMemo(() => {
         if (!gig) return [];
-        const sameCategory = GIGS.filter(
-            (g) => g.id !== gig.id && g.category === gig.category,
+        const sameCategory = otherGigs.filter(
+            (g) => g.id !== gig.id && g.category_name === gig.category_name,
         );
         if (sameCategory.length > 0) return sameCategory.slice(0, 3);
         // Fall back to other gigs so the section still has something to show.
-        return GIGS.filter((g) => g.id !== gig.id).slice(0, 3);
-    }, [gig]);
+        return otherGigs.filter((g) => g.id !== gig.id).slice(0, 3);
+    }, [gig, otherGigs]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center py-24">
+                <Loader2 className="animate-spin text-muted-foreground" size={24} />
+            </div>
+        );
+    }
 
     if (!gig) {
         return (
@@ -99,15 +149,15 @@ export default function GigView() {
     );
 }
 
-function GigDetails({ gig }: { gig: (typeof GIGS)[number] }) {
+function GigDetails({ gig }: { gig: Gig }) {
     const [liked, setLiked] = useState(false);
 
     return (
         <div className="flex flex-col gap-6">
             <div className="relative rounded-2xl border border-border bg-card p-2">
-                <AspectRatio ratio={16 / 9}>
+                <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-xl">
                     <img
-                        src="../../assets/npc_image.jpeg"
+                        src={gig.banner_url || "../../assets/npc_image.jpeg"}
                         alt={gig.title}
                         className="rounded-xl object-cover w-full h-full"
                     />
@@ -128,7 +178,7 @@ function GigDetails({ gig }: { gig: (typeof GIGS)[number] }) {
 
             <div>
                 <span className="text-xs text-primary font-medium">
-                    {gig.category}
+                    {gig.category_name}
                 </span>
                 <h1 className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">
                     {gig.title}
@@ -179,7 +229,7 @@ function GigDetails({ gig }: { gig: (typeof GIGS)[number] }) {
     );
 }
 
-function BookingPanel({ gig }: { gig: (typeof GIGS)[number] }) {
+function BookingPanel({ gig }: { gig: Gig }) {
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [messaging, setMessaging] = useState(false);

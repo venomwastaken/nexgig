@@ -166,6 +166,10 @@ class Gig(SQLModel, table=True):
     def provider_id(self) -> uuid.UUID:
         return self.user_id
 
+    @property
+    def provider(self) -> Optional["UserProfile"]:
+        return self.user.profile if self.user else None
+
 
 # class Category(SQLModel, table=True):
 #     __tablename__ = "category"

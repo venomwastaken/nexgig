@@ -88,3 +88,47 @@ export interface GigSubmission {
   status: GigApprovalStatus;
   rejectionReason?: string;
 }
+
+// Shape returned by the backend's GigRead schema (backend/app/schemas.py)
+export interface ApiGigSubmission {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category_name: string;
+  tags: { id: number; name: string }[];
+  created_at: string;
+  provider: {
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    username: string;
+    avatar_url?: string | null;
+  } | null;
+  approval_status: "PENDING" | "APPROVED" | "REJECTED";
+  rejection_reason?: string | null;
+}
+
+export function mapApiGigSubmission(g: ApiGigSubmission): GigSubmission {
+  return {
+    id: g.id,
+    title: g.title,
+    category: g.category_name,
+    price: g.price,
+    description: g.description,
+    tags: g.tags.map((t) => t.name),
+    submittedAt: new Date(g.created_at).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    provider: g.provider
+      ? {
+          name: `${g.provider.first_name} ${g.provider.last_name}`,
+          username: g.provider.username,
+          avatarUrl: g.provider.avatar_url ?? undefined,
+        }
+      : { name: "Unknown provider", username: "unknown" },
+    status: g.approval_status.toLowerCase() as GigApprovalStatus,
+    rejectionReason: g.rejection_reason ?? undefined,
+  };
+}
