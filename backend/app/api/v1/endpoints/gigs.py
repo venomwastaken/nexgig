@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, or_, select
 from typing import Annotated, List, Optional
 
-from app.models import Category, Gig, GigApprovalStatus, GigStatus, GigTagLink, GigTagLink, UserAccount, UserProfile,Tag
+from app.models import Gig, GigApprovalStatus, GigStatus, GigTagLink, UserAccount, UserProfile, Tag
 from app.core.database import get_db
 from app.core.storage import (
     ALLOWED_IMAGE_CONTENT_TYPES,
@@ -37,18 +37,12 @@ def create_gig(
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
 
-    category = None
-    if payload.category_id is not None:
-        category = db.get(Category, payload.category_id)
-        if not category:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category_id")
-
     new_gig = Gig(
         title=payload.title,
         description=payload.description,
         price=payload.price,
         user_id=user.user_id,
-        category_id=payload.category_id,
+        category_name=payload.category_name,
         approval_status=GigApprovalStatus.PENDING,
         banner_url=payload.banner_url,
         turnaround_time=payload.turnaround_time
@@ -93,7 +87,7 @@ def presign_gig_banner(
 @router.get("/", response_model=List[GigRead])
 def list_gigs(
     tag_id: Annotated[Optional[uuid.UUID], Query(description="Filter gigs by tag ID")] = None,
-    category_id: Annotated[Optional[uuid.UUID], Query(description="Filter gigs by category ID")] = None,
+    category_name: Annotated[Optional[str], Query(description="Filter gigs by category name")] = None,
     q: Annotated[Optional[str], Query(description="Keyword search in title/description")] = None,
     user: UserAccount = Depends(get_or_create_user),
     db: Session = Depends(get_db),
@@ -103,8 +97,8 @@ def list_gigs(
     if tag_id:
         statement = statement.join(GigTagLink).where(GigTagLink.tag_id == tag_id)
 
-    if category_id:
-        statement = statement.where(Gig.category_id == category_id)
+    if category_name:
+        statement = statement.where(Gig.category_name == category_name)
 
     if q:
         pattern = f"%{q}%"
@@ -192,12 +186,6 @@ def edit_gig(
     # Extract only the fields sent in the request body
     data = payload.model_dump(exclude_unset=True)
 
-    # Handle category validation if category_id was updated
-    if "category_id" in data and data["category_id"] is not None:
-        category = db.get(Category, data["category_id"])
-        if not category:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category_id")
-
     # Dynamically apply updates to Gig (including banner_url and turnaround_time)
     for key, value in data.items():
         if key != "tag_ids":
@@ -254,3 +242,51 @@ def delete_gig(
     db.delete(target)
     db.commit()
     return None
+
+def search_gigs(
+    session: Session,
+    category_name: Optional[str] = None,
+    keyword: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Gig]:
+    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
+
+    if category_name:
+        query = query.where(Gig.category_name == category_name)
+
+    if keyword:
+        pattern = f"%{keyword}%"
+        query = query.where(
+            or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern))
+        )
+
+    return session.exec(query.offset(offset).limit(limit)).all()
+
+@router.get("/search", response_model=list[GigRead])
+def browse_gigs(
+    category_name: Optional[str] = None,
+    q: Optional[str] = None,
+    session: Session = Depends(get_db),
+    user: Optional[UserAccount] = Depends(get_current_user_optional),
+):
+    query = select(Gig).where(Gig.status == GigStatus.ACTIVE)
+
+    if category_name:
+        query = query.where(Gig.category_name == category_name)
+
+    if q:
+        pattern = f"%{q}%"
+        query = query.where(or_(Gig.title.ilike(pattern), Gig.description.ilike(pattern)))
+
+    if user is None:
+        query = query.where(Gig.approval_status == GigApprovalStatus.APPROVED)
+    elif not user.is_admin:
+        query = query.where(
+            or_(
+                Gig.approval_status == GigApprovalStatus.APPROVED,
+                Gig.user_id == user.user_id,
+            )
+        )
+
+    return session.exec(query).all()
