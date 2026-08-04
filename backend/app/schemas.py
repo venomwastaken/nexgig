@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
+
+from pydantic import BaseModel, field_validator
 from app.models import GigStatus
 
 from sqlmodel import Field, SQLModel
@@ -231,4 +233,31 @@ class AttachmentPresignResponse(SQLModel):
     upload_url: str
     object_url: str
     object_key: str
+
+class EmailRequestIn(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        if not isinstance(value, str):
+            raise TypeError("email must be a string")
+        value = value.strip()
+        if not value or "@" not in value:
+            raise ValueError("invalid email")
+        return value
+
+
+class EmailConfirmIn(BaseModel):
+    code: str
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, value: str) -> str:
+        if not isinstance(value, str):
+            raise TypeError("code must be a string")
+        value = value.strip()
+        if not value:
+            raise ValueError("code is required")
+        return value
 
