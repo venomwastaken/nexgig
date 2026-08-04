@@ -11,6 +11,8 @@ import { Toaster } from '@/components/ui/sonner';
 import Gigs from './pages/Gigs';
 import GigView from './pages/GigView';
 import Messages from './pages/Messages';
+import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/components/dashboard/AdminDashboard';
 
 export default function App() {
     return (
@@ -22,6 +24,24 @@ export default function App() {
                 {/* Auth pages render full-screen via AuthCard, no navbar */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignUpPage />} />
+
+                {/* Dashboard pages render their own full-screen chrome, no navbar */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <RequireAuth>
+                            <Dashboard />
+                        </RequireAuth>
+                    }
+                />
+                <Route
+                    path="/admin"
+                    element={
+                        <RequireAuth>
+                            <AdminDashboard />
+                        </RequireAuth>
+                    }
+                />
 
                 {/* Everything else shares the Navbar/Footer via Layout's <Outlet /> */}
                 <Route element={<Layout />}>
@@ -70,4 +90,3 @@ export default function App() {
         </BrowserRouter>
     );
 }
-
