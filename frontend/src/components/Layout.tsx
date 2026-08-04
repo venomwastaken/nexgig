@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { useProfileStatus } from "@/hooks/useProfileStatus";
+import { NotificationsProvider } from "./NotificationProvider";
 
 const ONBOARDING_PATH = "/onboarding/profile";
 
@@ -27,12 +28,14 @@ export default function Layout() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-[#0B0B0B]">
-            <Navbar />
-            <main className="flex-1">
-                <Outlet />
-            </main>
-            <Footer />
-        </div>
+        <NotificationsProvider>
+            <div className="flex min-h-screen flex-col bg-[#0B0B0B]">
+                <Navbar />
+                <main className="flex-1">
+                    <Outlet />
+                </main>
+                <Footer />
+            </div>
+        </NotificationsProvider>
     );
 }
