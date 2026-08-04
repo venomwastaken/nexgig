@@ -15,7 +15,7 @@ from app.core.storage import (
     public_url_for_key,
 )
 from app.core.ws_manager import manager
-from app.models import Conversation, Gig, Message, UserAccount, UserProfile
+from app.models import Conversation, Gig, Message, NotificationType, UserAccount, UserProfile
 from app.schemas import (
     AttachmentPresignRequest,
     AttachmentPresignResponse,
@@ -25,6 +25,8 @@ from app.schemas import (
     ProviderRead,
 )
 from app.api.v1.endpoints.users import get_or_create_user, get_or_create_user_from_payload
+from app.services.notification_copy import message_copy
+from app.services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -282,6 +284,28 @@ async def conversation_ws(
             db.add(conversation)
             db.commit()
             db.refresh(message)
+
+            other_user_id = _other_user_id(conversation, user.user_id)
+            sender_provider = _load_provider_summary(user.user_id, db)
+            sender_name = (
+                sender_provider.username
+                if sender_provider and sender_provider.username
+                else f"{sender_provider.first_name} {sender_provider.last_name}".strip()
+                if sender_provider
+                else "Someone"
+            )
+            preview = message.body or ("Photo" if message.attachment_url else None)
+            title, body = message_copy(sender_name, preview)
+            NotificationService(db).create(
+                recipient_id=other_user_id,
+                actor_id=user.user_id,
+                type=NotificationType.MESSAGE,
+                title=title,
+                body=body,
+                entity_type="conversation",
+                entity_id=str(conversation_id),
+                link=f"/messages/{conversation_id}",
+            )
 
             await manager.broadcast(conversation_id, _to_message_read(message).model_dump(mode="json"))
     except WebSocketDisconnect:

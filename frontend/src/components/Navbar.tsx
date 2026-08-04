@@ -24,10 +24,13 @@ import {
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
+import NotificationBell from "./NotificationBell";
 
 const NAV_LINKS = [
     { label: "Explore", to: "/gigs" },
-    { label: "Contact Us", to: "/" },
+    { label: "About", to: "/about" },
+    { label: "FAQ", to: "/faq" },
+    { label: "Contact Us", to: "/contact" },
 ];
 
 function NavSearch({ className = "" }: { className?: string }) {
@@ -150,6 +153,8 @@ export default function Navbar() {
                                     <MessageCircle size={18} />
                                 </Button>
                             </Link>
+
+                            <NotificationBell />
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="flex items-center rounded-full py-2 px-2 outline-none transition-colors hover:bg-[#1F1F1F] data-popup-open:bg-[#1F1F1F] gap-2">
@@ -303,6 +308,13 @@ export default function Navbar() {
                                 className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
                             >
                                 Messages
+                            </Link>
+                            <Link
+                                to="/notifications"
+                                onClick={() => setMobileOpen(false)}
+                                className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
+                            >
+                                Notifications
                             </Link>
                             <Link
                                 to="/account"

@@ -1,5 +1,3 @@
-
-
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -12,13 +10,17 @@ from app.models import GigStatus, OrderStatus
 
 from sqlmodel import Field, SQLModel
 from uuid import UUID
+from sqlmodel import SQLModel
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models import GigStatus
 
 from .models import AccountStatus, GigApprovalStatus, UserRole
 
-
 # ---------- UserAccount ----------
 
-class UserAccountRead(SQLModel):
+class UserAccountRead(BaseModel):
     user_id: uuid.UUID
     email: str
     account_status: AccountStatus
@@ -28,13 +30,13 @@ class UserAccountRead(SQLModel):
     last_login: Optional[datetime] = None
 
 
-class UserAccountUpdate(SQLModel):
+class UserAccountUpdate(BaseModel):
     email: Optional[str] = None
 
 
 # ---------- UserWallet ----------
 
-class UserWalletRead(SQLModel):
+class UserWalletRead(BaseModel):
     wallet_id: uuid.UUID
     user_id: uuid.UUID
     available_tokens: Decimal
@@ -45,6 +47,10 @@ class UserWalletRead(SQLModel):
 
 # ---------- UserProfile ----------
 
+class UsernameAvailabilityRead(SQLModel):
+    available: bool
+
+
 class UserProfileCreate(SQLModel):
     first_name: str
     last_name: str
@@ -52,26 +58,31 @@ class UserProfileCreate(SQLModel):
     dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
-class UserProfileUpdate(SQLModel):
+class UserProfileUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = None
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=1000)
+    university: Optional[str] = None
     updated_at: Optional[datetime] = None
 
 
-class UserProfileRead(SQLModel):
+class UserProfileRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     first_name: str
     last_name: str
     username: str
+    dob: Optional[datetime] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
+    university: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -94,7 +105,7 @@ class UserSkillUpdate(SQLModel):
     is_active: Optional[bool] = None
 
 
-class UserSkillRead(SQLModel):
+class UserSkillRead(BaseModel):
     skill_id: uuid.UUID
     user_id: uuid.UUID
     category_name: str
@@ -106,14 +117,14 @@ class UserSkillRead(SQLModel):
 
 # ---------- UserReview ----------
 
-class UserReviewCreate(SQLModel):
+class UserReviewCreate(BaseModel):
     reviewee_id: uuid.UUID
     service_id: uuid.UUID
     rating: int = Field(ge=1, le=5)
     comment: Optional[str] = Field(default=None, max_length=2000)
 
 
-class UserReviewRead(SQLModel):
+class UserReviewRead(BaseModel):
     review_id: uuid.UUID
     reviewer_id: uuid.UUID
     reviewee_id: uuid.UUID
@@ -217,7 +228,7 @@ class AdminBulkUserActionResponse(SQLModel):
 
 # ---------- Gigs ----------
 # Base properties shared across schemas
-class GigBase(SQLModel):
+class GigBase(BaseModel):
     title: str
     description: str
     price: float
@@ -230,7 +241,7 @@ class GigCreate(GigBase):
     category_name: str 
 
 # Schema for modifying mutable gig fields
-class GigUpdate(SQLModel):
+class GigUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
@@ -240,16 +251,15 @@ class GigUpdate(SQLModel):
     turnaround_time: Optional[str] = None
 
 # Schema for updating just the lifecycle state
-class GigStatusUpdate(SQLModel):
+class GigStatusUpdate(BaseModel):
     status: GigStatus
 
 # Nested simplified object to present related records cleanly
-class TagRead(SQLModel):
+class TagRead(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # class CategoryRead(SQLModel):
 #     name: str
@@ -264,8 +274,7 @@ class ProviderRead(SQLModel):
     username: str
     avatar_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Publicly visible representation of a Gig
 class GigRead(GigBase):
@@ -302,6 +311,7 @@ class OrderRead(SQLModel):
     gig_title: str
     buyer: ProviderRead
     provider_id: uuid.UUID
+    provider: ProviderRead
     price: Decimal
     note: Optional[str] = None
     status: OrderStatus
@@ -345,6 +355,55 @@ class AttachmentPresignResponse(SQLModel):
     upload_url: str
     object_url: str
     object_key: str
+
+
+# ---------- Gig Reviews ----------
+
+class GigReviewCreate(SQLModel):
+    rating: int = Field(ge=1, le=5)
+    comment: Optional[str] = Field(default=None, max_length=2000)
+
+
+class GigReviewRead(SQLModel):
+    review_id: uuid.UUID
+    gig_id: uuid.UUID
+    reviewer: ProviderRead
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GigReviewSummary(SQLModel):
+    gig_id: uuid.UUID
+    average_rating: Optional[float] = None
+    review_count: int = 0
+
+
+# ---------- Gig Comments ----------
+
+class GigCommentCreate(SQLModel):
+    body: str = Field(min_length=1, max_length=2000)
+    parent_comment_id: Optional[uuid.UUID] = None
+
+
+class GigCommentUpdate(SQLModel):
+    body: str = Field(min_length=1, max_length=2000)
+
+
+class GigCommentRead(SQLModel):
+    id: uuid.UUID
+    gig_id: uuid.UUID
+    author: ProviderRead
+    parent_comment_id: Optional[uuid.UUID] = None
+    body: str
+    created_at: datetime
+    updated_at: datetime
+    is_edited: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class EmailRequestIn(BaseModel):
     email: str
