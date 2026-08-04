@@ -6,6 +6,8 @@ import { ApiGig, Gig, mapApiGigToGig } from "@/lib/gigs";
 import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
 import { useApi } from "@/hooks/useApi";
+import CommentsSection from "@/components/gig/CommentsSection";
+import ReviewsSection from "@/components/gig/ReviewsSection";
 import axios from "axios";
 import {
     ArrowLeft,
@@ -125,6 +127,10 @@ export default function GigView() {
                     {/* Left: gig + provider details */}
                     <div className="lg:col-span-3 min-w-0">
                         <GigDetails gig={gig} />
+                        <div className="mt-8 flex flex-col gap-6">
+                            <ReviewsSection gigId={gig.id} gigOwnerId={gig.provider.user_id} />
+                            <CommentsSection gigId={gig.id} />
+                        </div>
                     </div>
 
                     {/* Right: booking (kept under half the width on large screens) */}

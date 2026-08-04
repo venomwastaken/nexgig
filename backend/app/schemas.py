@@ -269,6 +269,55 @@ class AttachmentPresignResponse(SQLModel):
     object_url: str
     object_key: str
 
+
+# ---------- Gig Reviews ----------
+
+class GigReviewCreate(SQLModel):
+    rating: int = Field(ge=1, le=5)
+    comment: Optional[str] = Field(default=None, max_length=2000)
+
+
+class GigReviewRead(SQLModel):
+    review_id: uuid.UUID
+    gig_id: uuid.UUID
+    reviewer: ProviderRead
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GigReviewSummary(SQLModel):
+    gig_id: uuid.UUID
+    average_rating: Optional[float] = None
+    review_count: int = 0
+
+
+# ---------- Gig Comments ----------
+
+class GigCommentCreate(SQLModel):
+    body: str = Field(min_length=1, max_length=2000)
+    parent_comment_id: Optional[uuid.UUID] = None
+
+
+class GigCommentUpdate(SQLModel):
+    body: str = Field(min_length=1, max_length=2000)
+
+
+class GigCommentRead(SQLModel):
+    id: uuid.UUID
+    gig_id: uuid.UUID
+    author: ProviderRead
+    parent_comment_id: Optional[uuid.UUID] = None
+    body: str
+    created_at: datetime
+    updated_at: datetime
+    is_edited: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class EmailRequestIn(BaseModel):
     email: str
 
