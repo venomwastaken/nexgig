@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ArrowRight, Search, Plus, MessageCircle, ChevronDown, User as UserIcon, LogOut } from "lucide-react";
+import {
+    Menu,
+    X,
+    ArrowRight,
+    Search,
+    Plus,
+    MessageCircle,
+    ChevronDown,
+    User as UserIcon,
+    LogOut,
+} from "lucide-react";
 import { Show, useClerk, useUser } from "@clerk/react";
 import Logo from "./Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -60,7 +70,9 @@ export default function Navbar() {
     const { signOut } = useClerk();
 
     const isActive = (to: string) =>
-        to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+        to === "/"
+            ? location.pathname === "/"
+            : location.pathname.startsWith(to);
 
     const initials =
         [user?.firstName?.[0], user?.lastName?.[0]].filter(Boolean).join("") ||
@@ -79,9 +91,7 @@ export default function Navbar() {
                 </Link>
 
                 {/* Desktop nav */}
-                <nav
-                    className="hidden shrink-0 items-center gap-6 md:flex"
-                >
+                <nav className="hidden shrink-0 items-center gap-6 md:flex">
                     {NAV_LINKS.map((link) => (
                         <Link
                             key={link.to}
@@ -121,54 +131,76 @@ export default function Navbar() {
                             </Link>
                         </Show>
                         <Show when="signed-in">
-                            <Link
-                                to="/gig/create"
-                            >
-                                <Button variant="outline" className="bg-transparent rounded-full px-3! py-3!" size="lg">
-                                    <Plus data-icon="inline-start"/>
-                                    Create                                    
+                            <Link to="/gig/create">
+                                <Button
+                                    variant="outline"
+                                    className="bg-transparent rounded-full px-3! py-3!"
+                                    size="lg"
+                                >
+                                    <Plus data-icon="inline-start" />
+                                    Create
                                 </Button>
-
                             </Link>
-                            <Link
-                                to="/messages"
-                                aria-label="Messages"
-                                
-                            >
-                                <Button variant="outline" className="rounded-full px-3! py-3! bg-transparent" size="icon-lg">
+                            <Link to="/messages" aria-label="Messages">
+                                <Button
+                                    variant="outline"
+                                    className="rounded-full px-3! py-3! bg-transparent"
+                                    size="icon-lg"
+                                >
                                     <MessageCircle size={18} />
                                 </Button>
-                                
                             </Link>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="flex items-center rounded-full py-2 px-2 outline-none transition-colors hover:bg-[#1F1F1F] data-popup-open:bg-[#1F1F1F] gap-2">
                                     <Avatar>
-                                        <AvatarImage src={user?.imageUrl} alt={user?.fullName ?? "Account"} />
-                                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                                        <AvatarImage
+                                            src={user?.imageUrl}
+                                            alt={user?.fullName ?? "Account"}
+                                        />
+                                        <AvatarFallback className="text-xs">
+                                            {initials}
+                                        </AvatarFallback>
                                     </Avatar>
-                                    <ChevronDown size={18} className="text-[#8B8F9B]" />
+                                    <ChevronDown
+                                        size={18}
+                                        className="text-[#8B8F9B]"
+                                    />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" sideOffset={10} className="w-56">
+                                <DropdownMenuContent
+                                    align="end"
+                                    sideOffset={10}
+                                    className="w-56"
+                                >
                                     <DropdownMenuGroup>
                                         <DropdownMenuLabel>
                                             <div className="flex flex-col gap-0.5 py-0.5">
                                                 <span className="truncate text-sm font-medium text-foreground">
-                                                    {user?.fullName || user?.username}
+                                                    {user?.fullName ||
+                                                        user?.username}
                                                 </span>
                                                 <span className="truncate text-xs text-muted-foreground">
-                                                    {user?.primaryEmailAddress?.emailAddress}
+                                                    {
+                                                        user
+                                                            ?.primaryEmailAddress
+                                                            ?.emailAddress
+                                                    }
                                                 </span>
                                             </div>
                                         </DropdownMenuLabel>
                                     </DropdownMenuGroup>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate("/account")}>
+                                    <DropdownMenuItem
+                                        onClick={() => navigate("/account")}
+                                    >
                                         <UserIcon />
                                         Account
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={handleSignOut}
+                                    >
                                         <LogOut />
                                         Sign out
                                     </DropdownMenuItem>
@@ -197,7 +229,10 @@ export default function Navbar() {
 
                     <nav
                         className="flex flex-col gap-4"
-                        style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui" }}
+                        style={{
+                            fontFamily:
+                                "'Space Grotesk', ui-sans-serif, system-ui",
+                        }}
                     >
                         {NAV_LINKS.map((link) => (
                             <Link
@@ -236,7 +271,10 @@ export default function Navbar() {
                         <Show when="signed-in">
                             <div className="flex items-center gap-3 rounded-md border border-[#2F2F2F] px-3 py-2.5">
                                 <Avatar>
-                                    <AvatarImage src={user?.imageUrl} alt={user?.fullName ?? "Account"} />
+                                    <AvatarImage
+                                        src={user?.imageUrl}
+                                        alt={user?.fullName ?? "Account"}
+                                    />
                                     <AvatarFallback>{initials}</AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">
@@ -244,7 +282,10 @@ export default function Navbar() {
                                         {user?.fullName || user?.username}
                                     </div>
                                     <div className="truncate text-xs text-[#8B8F9B]">
-                                        {user?.primaryEmailAddress?.emailAddress}
+                                        {
+                                            user?.primaryEmailAddress
+                                                ?.emailAddress
+                                        }
                                     </div>
                                 </div>
                             </div>
