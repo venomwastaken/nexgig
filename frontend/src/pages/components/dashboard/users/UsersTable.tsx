@@ -154,7 +154,7 @@ export default function UsersTable({
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
                       <MoreHorizontal />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => onView(user)}>
                         <Eye /> View details
                       </DropdownMenuItem>

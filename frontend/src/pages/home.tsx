@@ -31,7 +31,7 @@ type Service = { title: string; body: string; to: string };
 const services: Service[] = [
   {
     title: "Post a gig",
-    body: "Turn your skills into paid work — design, tutoring, errands, editing. Set your price, tell your story.",
+    body: "Turn your skills into paid work - design, tutoring, errands, editing. Set your price, tell your story.",
     to: "/gigs/new",
   },
   {
@@ -78,7 +78,7 @@ export default function Home() {
             </h1>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-[#9a9a9a]">
               NexGig connects students who offer skills with peers who need them.
-              Post a gig, book a classmate, get it done — all inside your campus
+              Post a gig, book a classmate, get it done, all inside your campus
               community.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -167,7 +167,7 @@ export default function Home() {
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[#9a9a9a]">
               Sign up with your school email and start earning from the skills
-              you already have — or find someone who has the ones you don&apos;t.
+              you already have, or find someone who has the ones you don&apos;t.
             </p>
             <Link
               to="/signup"

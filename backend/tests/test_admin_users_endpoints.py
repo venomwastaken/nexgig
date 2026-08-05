@@ -184,7 +184,7 @@ def test_suspend_expiry_is_healed_lazily():
 
         with Session(engine) as session:
             user = session.get(UserAccount, USER_ID)
-            assert user.account_status == AccountStatus.ACTIVE
+            assert user.account_status == AccountStatus.active
             assert user.suspended_until is None
     finally:
         _teardown()
@@ -281,7 +281,7 @@ def test_suspended_user_is_rejected_until_expiry():
                 user_id=USER_ID,
                 email="user@example.com",
                 clerk_id="clerk_user",
-                account_status=AccountStatus.SUSPENDED,
+                account_status=AccountStatus.suspended,
                 suspended_until=datetime.now(timezone.utc) + timedelta(hours=1),
             )
         )
@@ -303,4 +303,4 @@ def test_suspended_user_is_rejected_until_expiry():
         user = users_endpoint.get_or_create_user_from_payload(
             {"sub": "clerk_user", "email": "user@example.com"}, session
         )
-        assert user.account_status == AccountStatus.ACTIVE
+        assert user.account_status == AccountStatus.active

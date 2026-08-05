@@ -72,7 +72,7 @@ class UserAccount(SQLModel, table=True):
     is_banned: bool = Field(default=False)
     ban_reason: Optional[str] = Field(default=None, max_length=500)
     banned_at: Optional[datetime] = Field(default=None)
-    # Suspension reuses AccountStatus.SUSPENDED; these two fields carry the extra
+    # Suspension reuses AccountStatus.suspended; these two fields carry the extra
     # metadata (when it lifts, why) that the enum value alone can't express.
     suspended_until: Optional[datetime] = Field(default=None)
     suspension_reason: Optional[str] = Field(default=None, max_length=500)

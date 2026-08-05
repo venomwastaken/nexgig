@@ -176,7 +176,7 @@ def _to_admin_user_read(
     session: Session, user: UserAccount, profile: Optional[UserProfile]
 ) -> AdminUserRead:
     suspension = None
-    if user.account_status == AccountStatus.SUSPENDED and not user.is_banned:
+    if user.account_status == AccountStatus.suspended and not user.is_banned:
         suspension = AdminUserSuspension(reason=user.suspension_reason, expires_at=user.suspended_until)
 
     return AdminUserRead(
@@ -442,7 +442,7 @@ def suspend_user(
     user = _get_target_user(session, user_id)
     _guard_not_self(admin_user, user, "suspend")
 
-    user.account_status = AccountStatus.SUSPENDED
+    user.account_status = AccountStatus.suspended
     user.suspension_reason = payload.reason
     user.suspended_until = (
         datetime.now(timezone.utc) + timedelta(hours=payload.duration_hours) if payload.duration_hours else None
@@ -462,8 +462,8 @@ def unsuspend_user(
 ):
     user = _get_target_user(session, user_id)
 
-    if user.account_status == AccountStatus.SUSPENDED:
-        user.account_status = AccountStatus.ACTIVE
+    if user.account_status == AccountStatus.suspended:
+        user.account_status = AccountStatus.active
         user.suspended_until = None
         user.suspension_reason = None
         session.add(user)
@@ -487,7 +487,7 @@ def delete_user(
     user = _get_target_user(session, user_id)
     _guard_not_self(admin_user, user, "delete")
 
-    user.account_status = AccountStatus.DEACTIVATED
+    user.account_status = AccountStatus.deactivated
     user.is_banned = False
     user.ban_reason = None
     user.banned_at = None
@@ -546,16 +546,16 @@ def bulk_user_action(
             user.ban_reason = None
             user.banned_at = None
         elif payload.action == "suspend":
-            user.account_status = AccountStatus.SUSPENDED
+            user.account_status = AccountStatus.suspended
             user.suspension_reason = payload.reason
             user.suspended_until = now + timedelta(hours=payload.duration_hours) if payload.duration_hours else None
         elif payload.action == "unsuspend":
-            if user.account_status == AccountStatus.SUSPENDED:
-                user.account_status = AccountStatus.ACTIVE
+            if user.account_status == AccountStatus.suspended:
+                user.account_status = AccountStatus.active
                 user.suspended_until = None
                 user.suspension_reason = None
         elif payload.action == "delete":
-            user.account_status = AccountStatus.DEACTIVATED
+            user.account_status = AccountStatus.deactivated
             user.is_banned = False
             user.suspended_until = None
             user.suspension_reason = None

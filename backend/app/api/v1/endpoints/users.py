@@ -58,7 +58,7 @@ def get_or_create_user_from_payload(payload: dict, db: Session) -> UserAccount:
             raise HTTPException(status_code=403, detail="This account has been banned.")
 
         healed = heal_expired_suspension(user)
-        if not healed and user.account_status == AccountStatus.SUSPENDED:
+        if not healed and user.account_status == AccountStatus.suspended:
             raise HTTPException(status_code=403, detail="This account is suspended.")
 
         # Throttled so a chatty client doesn't turn every request into a write.

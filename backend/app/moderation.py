@@ -23,11 +23,11 @@ def heal_expired_suspension(user: UserAccount) -> bool:
     """If a timed suspension has passed its expiry, lift it in place. Returns True
     if the row was changed — the caller is responsible for committing."""
     if (
-        user.account_status == AccountStatus.SUSPENDED
+        user.account_status == AccountStatus.suspended
         and user.suspended_until is not None
         and _is_past(user.suspended_until)
     ):
-        user.account_status = AccountStatus.ACTIVE
+        user.account_status = AccountStatus.active
         user.suspended_until = None
         user.suspension_reason = None
         return True
@@ -40,8 +40,8 @@ def effective_status(user: UserAccount) -> str:
     (frontend/src/pages/components/dashboard/users/types.ts)."""
     if user.is_banned:
         return "banned"
-    if user.account_status == AccountStatus.SUSPENDED:
+    if user.account_status == AccountStatus.suspended:
         if user.suspended_until is not None and _is_past(user.suspended_until):
-            return AccountStatus.ACTIVE.value
-        return AccountStatus.SUSPENDED.value
+            return AccountStatus.active.value
+        return AccountStatus.suspended.value
     return user.account_status.value
