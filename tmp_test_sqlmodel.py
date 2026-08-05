@@ -1,1 +1,0 @@
-from sqlmodel import SQLModel, Field\r\nclass T(SQLModel, table=True):\r\n    a: int = Field(default=1)\r\nprint(T)\r\n
