@@ -13,8 +13,13 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now copy the actual application code.
+# Now copy the actual application code, plus Alembic's migration
+# scripts/config — the pre-deploy command (set on the Railway service)
+# needs these to run `alembic upgrade head` before the new version
+# goes live.
 COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini .
 
 EXPOSE 8000
 
