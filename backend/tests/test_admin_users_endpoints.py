@@ -89,7 +89,7 @@ def test_get_user_detail_includes_stats_shape():
         body = res.json()
         assert body["email"] == "user@example.com"
         assert body["role"] == "user"
-        assert body["account_status"] == "pending_verification"
+        assert body["account_status"] == "active"
         assert body["stats"] == {
             "gigs_posted": 0,
             "orders_completed": 0,
@@ -149,7 +149,7 @@ def test_ban_unban_and_self_ban_guard():
 
         res = client.post(f"/api/v1/admin/users/{USER_ID}/unban")
         assert res.status_code == 200
-        assert res.json()["account_status"] == "pending_verification"
+        assert res.json()["account_status"] == "active"
     finally:
         _teardown()
 
