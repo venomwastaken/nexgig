@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { useApi } from "@/hooks/useApi";
 import Button from "@/pages/ui/Button";
+import PayoutAccountSection from "@/pages/components/account/PayoutAccountSection";
 
 // ---------- Types (mirrors backend/app/schemas.py) ----------
 
@@ -454,6 +455,8 @@ export default function AccountPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <PayoutAccountSection />
 
             {/* Profile edit */}
             {account.profile ? (

@@ -41,6 +41,7 @@ export interface ApiGigSubmission {
 
 export interface Me {
   userId: string;
+  email: string;
   firstName: string;
   lastName: string;
   username: string;
@@ -77,6 +78,7 @@ export interface ApiMe {
 export function mapApiMe(d: ApiMe): Me {
   return {
     userId: d.user_id,
+    email: d.email,
     firstName: d.profile?.first_name ?? "there",
     lastName: d.profile?.last_name ?? "",
     username: d.profile?.username ?? "",
@@ -148,6 +150,9 @@ export function mapApiMyGig(g: ApiMyGig): MyGig {
 
 export type OrderStatus = "requested" | "confirmed" | "in_progress" | "completed" | "cancelled";
 
+export type PaymentStatus = "pending" | "success" | "failed" | "abandoned";
+export type EscrowStatus = "held" | "released" | "refunded";
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   requested: "Requested",
   confirmed: "Confirmed",
@@ -164,21 +169,21 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: "#ef4444",
 };
 
-// The forward lifecycle a provider can advance a request through; matches
-// the transitions the backend accepts in PATCH /orders/{id}/status.
-export const ORDER_STATUS_ORDER: OrderStatus[] = [
-  "requested",
-  "confirmed",
-  "in_progress",
-  "completed",
-];
+// The only provider-driven PATCH transition left — confirmed -> in_progress now
+// happens automatically once payment clears, and in_progress -> completed
+// requires mutual confirmation from both sides (see canBuyerConfirm/canProviderConfirm).
+export const ORDER_STATUS_ORDER: OrderStatus[] = ["requested", "confirmed"];
 
 export const nextOrderStatus = (current: OrderStatus): OrderStatus | null => {
-  if (current === "cancelled") return null;
-  const idx = ORDER_STATUS_ORDER.indexOf(current);
-  if (idx === -1 || idx === ORDER_STATUS_ORDER.length - 1) return null;
-  return ORDER_STATUS_ORDER[idx + 1];
+  if (current !== "requested") return null;
+  return "confirmed";
 };
+
+export const canBuyerConfirmComplete = (o: Pick<IncomingRequest, "status" | "buyerConfirmedAt">) =>
+  o.status === "in_progress" && !o.buyerConfirmedAt;
+
+export const canProviderConfirmComplete = (o: Pick<IncomingRequest, "status" | "providerConfirmedAt">) =>
+  o.status === "in_progress" && !o.providerConfirmedAt;
 
 export interface IncomingRequest {
   id: string;
@@ -190,6 +195,10 @@ export interface IncomingRequest {
   price: number;
   note?: string | null;
   status: OrderStatus;
+  paymentStatus: PaymentStatus | null;
+  escrowStatus: EscrowStatus | null;
+  buyerConfirmedAt: string | null;
+  providerConfirmedAt: string | null;
   createdAt: string;
 }
 
@@ -216,6 +225,10 @@ export interface ApiOrder {
   price: number;
   note?: string | null;
   status: OrderStatus;
+  payment_status: PaymentStatus | null;
+  escrow_status: EscrowStatus | null;
+  buyer_confirmed_at: string | null;
+  provider_confirmed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -231,39 +244,14 @@ export function mapApiOrder(o: ApiOrder): IncomingRequest {
     price: o.price,
     note: o.note,
     status: o.status,
+    paymentStatus: o.payment_status,
+    escrowStatus: o.escrow_status,
+    buyerConfirmedAt: o.buyer_confirmed_at,
+    providerConfirmedAt: o.provider_confirmed_at,
     createdAt: o.created_at,
   };
 }
 
-// ---------- Ordered services (gigs the current user has booked as a buyer) ----------
-
-export interface OrderedService {
-  id: string;
-  gigId: string;
-  gigTitle: string;
-  providerName: string;
-  providerUsername: string;
-  providerAvatarUrl?: string;
-  price: number;
-  note?: string | null;
-  status: OrderStatus;
-  createdAt: string;
-}
-
-export function mapApiOrderToOrderedService(o: ApiOrder): OrderedService {
-  return {
-    id: o.id,
-    gigId: o.gig_id,
-    gigTitle: o.gig_title,
-    providerName: `${o.provider.first_name} ${o.provider.last_name}`,
-    providerUsername: o.provider.username,
-    providerAvatarUrl: o.provider.avatar_url ?? undefined,
-    price: o.price,
-    note: o.note,
-    status: o.status,
-    createdAt: o.created_at,
-  };
-}
 
 export function mapApiGigSubmission(g: ApiGigSubmission): GigSubmission {
   return {

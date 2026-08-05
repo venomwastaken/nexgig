@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 declare global {
     interface Window {
-        PaystackPop: any;
+        PaystackPop?: any;
     }
 }
 

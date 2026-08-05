@@ -13,6 +13,9 @@
   <body>
     <!-- main.tsx looks for this exact id and renders the React app into it -->
     <div id="root"></div>
+    <!-- Paystack Inline checkout — see PayButton.tsx. Loaded globally instead of
+         via npm (react-paystack's peer deps don't target React 19 cleanly). -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
