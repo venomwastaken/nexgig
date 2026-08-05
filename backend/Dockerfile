@@ -26,4 +26,11 @@ EXPOSE 8000
 # No --reload here: that's a dev-only convenience (docker-compose.yml
 # passes it in separately for local work). $PORT is set by hosts like
 # Railway/Render at runtime; 8000 is the fallback for `docker run` locally.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+#
+# --proxy-headers/--forwarded-allow-ips: Railway terminates HTTPS at its
+# edge and forwards plain HTTP to this container, so without these flags
+# uvicorn thinks every request is HTTP — any redirect it generates (e.g.
+# FastAPI's trailing-slash redirect) comes back as an insecure http://
+# Location header, which browsers block as mixed content on an HTTPS
+# page. These flags make it trust Railway's X-Forwarded-Proto instead.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
