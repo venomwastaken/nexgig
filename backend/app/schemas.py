@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, List
+from typing import Literal, Optional, List
 
 
 from pydantic import BaseModel, field_validator
@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import GigStatus
 
-from .models import AccountStatus, GigApprovalStatus
+from .models import AccountStatus, GigApprovalStatus, UserRole
 
 # ---------- UserAccount ----------
 
@@ -24,6 +24,8 @@ class UserAccountRead(BaseModel):
     user_id: uuid.UUID
     email: str
     account_status: AccountStatus
+    is_admin: bool = False
+    role: UserRole = UserRole.USER
     created_at: datetime
     last_login: Optional[datetime] = None
 
@@ -139,6 +141,90 @@ class UserAccountWithProfile(UserAccountRead):
     instead of forcing the frontend to make three calls."""
     profile: Optional[UserProfileRead] = None
     wallet: Optional[UserWalletRead] = None
+
+
+# ---------- Admin: user management ----------
+# Matches frontend/src/pages/components/dashboard/users/types.ts (ApiAdminUser etc.)
+# — keep field names in sync with that file when changing either side.
+
+# Backend AccountStatus has no "banned" member (see app/moderation.py for why); this
+# is the display-only union the admin endpoints actually return.
+AdminDisplayStatus = Literal["pending_verification", "active", "suspended", "banned", "deactivated"]
+
+
+class AdminProfileRead(SQLModel):
+    username: str
+    first_name: str
+    last_name: str
+    avatar_url: Optional[str] = None
+
+
+class AdminUserStats(SQLModel):
+    gigs_posted: int
+    orders_completed: int
+    reviews_received: int
+    average_rating: Optional[float] = None
+
+
+class AdminUserSuspension(SQLModel):
+    reason: Optional[str] = None
+    expires_at: Optional[datetime] = None
+
+
+class AdminUserRead(SQLModel):
+    user_id: uuid.UUID
+    email: str
+    account_status: AdminDisplayStatus
+    role: UserRole
+    is_admin: bool
+    verified: bool
+    created_at: datetime
+    last_login: Optional[datetime] = None
+    profile: Optional[AdminProfileRead] = None
+    suspension: Optional[AdminUserSuspension] = None
+    ban_reason: Optional[str] = None
+    stats: AdminUserStats
+
+
+class AdminUserListResponse(SQLModel):
+    items: List[AdminUserRead]
+    total: int
+
+
+class AdminUserUpdate(SQLModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
+class AdminRoleUpdate(SQLModel):
+    role: UserRole
+
+
+class AdminBanRequest(SQLModel):
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class AdminSuspendRequest(SQLModel):
+    reason: Optional[str] = Field(default=None, max_length=500)
+    duration_hours: Optional[int] = Field(default=None, gt=0)
+
+
+AdminBulkAction = Literal["ban", "unban", "suspend", "unsuspend", "delete", "set_role"]
+
+
+class AdminBulkUserActionRequest(SQLModel):
+    user_ids: List[uuid.UUID]
+    action: AdminBulkAction
+    reason: Optional[str] = Field(default=None, max_length=500)
+    duration_hours: Optional[int] = Field(default=None, gt=0)
+    role: Optional[UserRole] = None
+
+
+class AdminBulkUserActionResponse(SQLModel):
+    updated: int
+    missing: List[str] = []
 
 # ---------- Gigs ----------
 # Base properties shared across schemas
