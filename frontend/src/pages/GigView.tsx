@@ -6,6 +6,9 @@ import { ApiGig, Gig, mapApiGigToGig } from "@/lib/gigs";
 import { GigCard } from "@/pages/Gigs";
 import Button from "@/pages/ui/Button";
 import { useApi } from "@/hooks/useApi";
+import { useUser } from "@clerk/react";
+import CommentsSection from "@/components/gig/CommentsSection";
+import ReviewsSection from "@/components/gig/ReviewsSection";
 import axios from "axios";
 import {
     ArrowLeft,
@@ -18,6 +21,12 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+
+declare global {
+    interface Window {
+        PaystackPop: any;
+    }
+}
 
 function timeAgo(iso: string) {
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -125,6 +134,10 @@ export default function GigView() {
                     {/* Left: gig + provider details */}
                     <div className="lg:col-span-3 min-w-0">
                         <GigDetails gig={gig} />
+                        <div className="mt-8 flex flex-col gap-6">
+                            <ReviewsSection gigId={gig.id} gigOwnerId={gig.provider.user_id} />
+                            <CommentsSection gigId={gig.id} />
+                        </div>
                     </div>
 
                     {/* Right: booking (kept under half the width on large screens) */}
@@ -236,6 +249,8 @@ function BookingPanel({ gig }: { gig: Gig }) {
     const [messaging, setMessaging] = useState(false);
     const api = useApi();
     const navigate = useNavigate();
+    const { user } = useUser();
+    const email = user?.primaryEmailAddress?.emailAddress ?? "";
 
     async function handleMessageProvider() {
         setMessaging(true);
@@ -252,11 +267,15 @@ function BookingPanel({ gig }: { gig: Gig }) {
         }
     }
 
-    async function handleBook() {
+    async function sendBooking(paymentReference: string) {
         setSubmitting(true);
         try {
-            await api.post("/orders/", { gig_id: gig.id, note: note.trim() || undefined });
-            toast.success("Booking request sent to the provider!");
+            await api.post("/orders/", {
+                gig_id: gig.id,
+                note: note.trim() || undefined,
+                payment_reference: paymentReference,
+            });
+            toast.success("Payment held in escrow — booking request sent!");
             setNote("");
         } catch (error) {
             const message =
@@ -267,6 +286,19 @@ function BookingPanel({ gig }: { gig: Gig }) {
         } finally {
             setSubmitting(false);
         }
+    }
+
+    function handleBook() {
+        const popup = new window.PaystackPop();
+        popup.newTransaction({
+            key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
+            email,
+            amount: gig.price * 100,
+            ref: `gig_${gig.id}_${Date.now()}`,
+            onSuccess: (transaction: { reference: string }) => {
+                sendBooking(transaction.reference);
+            },
+        });
     }
 
     return (
@@ -314,7 +346,7 @@ function BookingPanel({ gig }: { gig: Gig }) {
             </button>
 
             <p className="text-xs text-muted-foreground text-center">
-                You won't be charged until the provider accepts your request.
+                Payment is held securely until the job is done.
             </p>
         </div>
     );

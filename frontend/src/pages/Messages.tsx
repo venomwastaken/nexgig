@@ -1,9 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Badge from "@/components/ui/Badge";
+import { Bubble, BubbleContent, BubbleGroup } from "@/components/ui/bubble";
 import {
     Message,
     MessageAvatar,
     MessageContent,
+    MessageFooter,
     MessageGroup,
 } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,10 +13,41 @@ import { useApi } from "@/hooks/useApi";
 import { useConversationSocket } from "@/hooks/useConversationSocket";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, ConversationSummary, ProviderSummary } from "@/lib/messages";
+import { useUser } from "@clerk/react";
 import { ArrowLeft, Loader2, Paperclip, Send } from "lucide-react";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
+
+function formatMessageTime(iso: string) {
+    return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+type MessageCluster = {
+    senderId: string;
+    isMine: boolean;
+    messages: ChatMessage[];
+};
+
+// Consecutive messages from the same sender collapse into one Message row
+// (one avatar) with a BubbleGroup of stacked bubbles, matching shadcn's
+// grouping pattern instead of repeating an avatar per message.
+function clusterMessages(messages: ChatMessage[], currentUserId: string | null): MessageCluster[] {
+    const clusters: MessageCluster[] = [];
+    for (const m of messages) {
+        const last = clusters[clusters.length - 1];
+        if (last && last.senderId === m.sender_id) {
+            last.messages.push(m);
+        } else {
+            clusters.push({
+                senderId: m.sender_id,
+                isMine: m.sender_id === currentUserId,
+                messages: [m],
+            });
+        }
+    }
+    return clusters;
+}
 
 export default function Messages() {
     const { conversationId } = useParams<{ conversationId?: string }>();
@@ -170,7 +203,12 @@ function ThreadPane({
     onMessageSent: () => void;
 }) {
     const api = useApi();
+    const { user } = useUser();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const clusters = useMemo(
+        () => clusterMessages(messages, currentUserId),
+        [messages, currentUserId]
+    );
     const [loading, setLoading] = useState(true);
     const [text, setText] = useState("");
     const [uploading, setUploading] = useState(false);
@@ -289,43 +327,60 @@ function ThreadPane({
                     </div>
                 ) : (
                     <MessageGroup>
-                        {messages.map((m) => {
-                            const isMine = m.sender_id === currentUserId;
+                        {clusters.map((cluster) => {
+                            const { isMine } = cluster;
+                            const lastMessage = cluster.messages[cluster.messages.length - 1];
                             return (
-                                <Message key={m.id} align={isMine ? "end" : "start"}>
-                                    {!isMine && (
-                                        <MessageAvatar>
-                                            <Avatar size="sm">
-                                                <AvatarImage
-                                                    src={otherParticipant?.avatar_url ?? undefined}
-                                                />
-                                                <AvatarFallback>
-                                                    {otherParticipant?.first_name?.[0]}
-                                                    {otherParticipant?.last_name?.[0]}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                        </MessageAvatar>
-                                    )}
-                                    <MessageContent>
-                                        {m.attachment_url && (
-                                            <img
-                                                src={m.attachment_url}
-                                                alt="Attachment"
-                                                className="rounded-lg max-w-xs"
-                                            />
-                                        )}
-                                        {m.body && (
-                                            <div
-                                                className={cn(
-                                                    "rounded-2xl px-3 py-2 text-sm max-w-xs",
+                                <Message
+                                    key={cluster.messages[0].id}
+                                    align={isMine ? "end" : "start"}
+                                >
+                                    <MessageAvatar>
+                                        <Avatar size="sm">
+                                            <AvatarImage
+                                                src={
                                                     isMine
-                                                        ? "bg-primary text-primary-foreground"
-                                                        : "bg-muted text-foreground"
-                                                )}
-                                            >
-                                                {m.body}
-                                            </div>
-                                        )}
+                                                        ? user?.imageUrl
+                                                        : otherParticipant?.avatar_url ?? undefined
+                                                }
+                                            />
+                                            <AvatarFallback>
+                                                {isMine
+                                                    ? user?.firstName?.[0]
+                                                    : otherParticipant?.first_name?.[0]}
+                                                {isMine
+                                                    ? user?.lastName?.[0]
+                                                    : otherParticipant?.last_name?.[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </MessageAvatar>
+                                    <MessageContent>
+                                        <BubbleGroup>
+                                            {cluster.messages.map((m) => (
+                                                <Fragment key={m.id}>
+                                                    {m.attachment_url && (
+                                                        <Bubble variant="ghost">
+                                                            <BubbleContent>
+                                                                <img
+                                                                    src={m.attachment_url}
+                                                                    alt="Attachment"
+                                                                    className="max-w-xs rounded-lg"
+                                                                />
+                                                            </BubbleContent>
+                                                        </Bubble>
+                                                    )}
+                                                    {m.body && (
+                                                        <Bubble variant={isMine ? "default" : "muted"}>
+                                                            <BubbleContent>{m.body}</BubbleContent>
+                                                        </Bubble>
+                                                    )}
+                                                </Fragment>
+                                            ))}
+                                        </BubbleGroup>
+                                        <MessageFooter>
+                                            {formatMessageTime(lastMessage.created_at)}
+                                            {isMine && " · Delivered"}
+                                        </MessageFooter>
                                     </MessageContent>
                                 </Message>
                             );

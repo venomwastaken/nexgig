@@ -6,6 +6,7 @@ import WelcomeCard from "./components/dashboard/WelcomeCard";
 import StatsRow from "./components/dashboard/StatsRow";
 import MyGigsPanel from "./components/dashboard/MyGigsPanel";
 import ServiceRequestsPanel from "./components/dashboard/ServiceRequestsPanel";
+import OrderedServicesPanel from "./components/dashboard/OrderedServicesPanel";
 import { useApi } from "@/hooks/useApi";
 import {
   ApiMe,
@@ -14,9 +15,11 @@ import {
   IncomingRequest,
   Me,
   MyGig,
+  OrderedService,
   mapApiMe,
   mapApiMyGig,
   mapApiOrder,
+  mapApiOrderToOrderedService,
   nextOrderStatus,
 } from "./components/dashboard/types";
 
@@ -25,6 +28,7 @@ const Dashboard = () => {
   const [me, setMe] = useState<Me | null>(null);
   const [gigs, setGigs] = useState<MyGig[]>([]);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
+  const [myOrders, setMyOrders] = useState<OrderedService[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,8 +38,9 @@ const Dashboard = () => {
       api.get<ApiMe>("/users/me"),
       api.get<ApiMyGig[]>("/gigs/"),
       api.get<ApiOrder[]>("/orders/incoming"),
+      api.get<ApiOrder[]>("/orders/mine"),
     ])
-      .then(([meRes, gigsRes, requestsRes]) => {
+      .then(([meRes, gigsRes, requestsRes, myOrdersRes]) => {
         if (cancelled) return;
         const mappedMe = mapApiMe(meRes.data);
         setMe(mappedMe);
@@ -45,6 +50,7 @@ const Dashboard = () => {
             .map(mapApiMyGig)
         );
         setRequests(requestsRes.data.map(mapApiOrder));
+        setMyOrders(myOrdersRes.data.map(mapApiOrderToOrderedService));
       })
       .catch(() => {
         if (!cancelled) toast.error("Couldn't load your dashboard. Please try again.");
@@ -90,6 +96,19 @@ const Dashboard = () => {
       setRequests((prev) => prev.map((r) => (r.id === id ? mapApiOrder(data) : r)));
     } catch {
       toast.error("Couldn't decline this request. Please try again.");
+    }
+  };
+
+  const handleCancelMyOrder = async (id: string) => {
+    try {
+      const { data } = await api.patch<ApiOrder>(`/orders/${id}/status`, {
+        status: "cancelled",
+      });
+      setMyOrders((prev) =>
+        prev.map((o) => (o.id === id ? mapApiOrderToOrderedService(data) : o))
+      );
+    } catch {
+      toast.error("Couldn't cancel this order. Please try again.");
     }
   };
 
@@ -160,6 +179,7 @@ const Dashboard = () => {
         onCancel={handleCancelRequest}
         onAdvance={handleAdvanceRequest}
       />
+      <OrderedServicesPanel orders={myOrders} onCancel={handleCancelMyOrder} />
       <MyGigsPanel
         gigs={gigs}
         onSave={handleSaveGig}

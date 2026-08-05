@@ -14,12 +14,14 @@ import Messages from './pages/Messages';
 import { ProfileStatusProvider } from '@/hooks/useProfileStatus';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/components/dashboard/AdminDashboard';
+import PaystackTest from './pages/PaystackTest';
 import AboutUs from './pages/AboutUs';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import FreelancerProfile from './pages/FreelancerProfile';
 import ProfileEdit from './pages/ProfileEdit';
+import NotificationsPage from './pages/NotificationsPage';
 
 export default function App() {
     return (
@@ -34,6 +36,9 @@ export default function App() {
                 {/* Auth pages render full-screen via AuthCard, no navbar */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignUpPage />} />
+
+                {/* Temporary test route for verifying the Paystack integration works */}
+                <Route path="/paystack-test" element={<PaystackTest />} />
 
                 {/* Dashboard pages render their own full-screen chrome, no navbar */}
                 <Route
@@ -111,6 +116,14 @@ export default function App() {
                         element={
                             <RequireAuth>
                                 <Messages />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/notifications"
+                        element={
+                            <RequireAuth>
+                                <NotificationsPage />
                             </RequireAuth>
                         }
                     />
