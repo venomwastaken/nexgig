@@ -4,18 +4,21 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
   nextOrderStatus,
+  canProviderConfirmComplete,
 } from "./types";
 
 interface ServiceRequestsPanelProps {
   requests: IncomingRequest[];
   onCancel?: (id: string) => void;
   onAdvance?: (id: string) => void;
+  onConfirmComplete?: (id: string) => void;
 }
 
 export default function ServiceRequestsPanel({
   requests,
   onCancel,
   onAdvance,
+  onConfirmComplete,
 }: ServiceRequestsPanelProps) {
   return (
     <div className="bg-[#1b1b1b] border border-[#2a2a2a] rounded-xl p-5 flex flex-col gap-3">
@@ -32,6 +35,10 @@ export default function ServiceRequestsPanel({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {requests.map((r) => {
             const upcoming = nextOrderStatus(r.status);
+            const awaitingPayment = r.status === "confirmed" && r.paymentStatus !== "success";
+            const canConfirm = canProviderConfirmComplete(r);
+            const waitingOnBuyer =
+              r.status === "in_progress" && r.providerConfirmedAt && !r.buyerConfirmedAt;
             return (
               <div
                 key={r.id}
@@ -74,6 +81,20 @@ export default function ServiceRequestsPanel({
                     >
                       Mark {ORDER_STATUS_LABELS[upcoming].toLowerCase()} →
                     </button>
+                  )}
+                  {awaitingPayment && (
+                    <span className="text-[10px] text-[#8a8a8a]">Awaiting payment</span>
+                  )}
+                  {canConfirm && (
+                    <button
+                      onClick={() => onConfirmComplete?.(r.id)}
+                      className="text-[11px] font-medium text-[#1b976f] hover:text-[#22b384] transition-colors"
+                    >
+                      I've delivered — confirm complete →
+                    </button>
+                  )}
+                  {waitingOnBuyer && (
+                    <span className="text-[10px] text-[#8a8a8a]">Waiting on buyer</span>
                   )}
                 </div>
               </div>

@@ -6,6 +6,7 @@ import WelcomeCard from "./components/dashboard/WelcomeCard";
 import StatsRow from "./components/dashboard/StatsRow";
 import MyGigsPanel from "./components/dashboard/MyGigsPanel";
 import ServiceRequestsPanel from "./components/dashboard/ServiceRequestsPanel";
+import MyOrdersPanel from "./components/dashboard/MyOrdersPanel";
 import { useApi } from "@/hooks/useApi";
 import {
   ApiMe,
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const [me, setMe] = useState<Me | null>(null);
   const [gigs, setGigs] = useState<MyGig[]>([]);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
+  const [myOrders, setMyOrders] = useState<IncomingRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,8 +36,9 @@ const Dashboard = () => {
       api.get<ApiMe>("/users/me"),
       api.get<ApiMyGig[]>("/gigs/"),
       api.get<ApiOrder[]>("/orders/incoming"),
+      api.get<ApiOrder[]>("/orders/mine"),
     ])
-      .then(([meRes, gigsRes, requestsRes]) => {
+      .then(([meRes, gigsRes, requestsRes, myOrdersRes]) => {
         if (cancelled) return;
         const mappedMe = mapApiMe(meRes.data);
         setMe(mappedMe);
@@ -45,6 +48,7 @@ const Dashboard = () => {
             .map(mapApiMyGig)
         );
         setRequests(requestsRes.data.map(mapApiOrder));
+        setMyOrders(myOrdersRes.data.map(mapApiOrder));
       })
       .catch(() => {
         if (!cancelled) toast.error("Couldn't load your dashboard. Please try again.");
@@ -90,6 +94,32 @@ const Dashboard = () => {
       setRequests((prev) => prev.map((r) => (r.id === id ? mapApiOrder(data) : r)));
     } catch {
       toast.error("Couldn't decline this request. Please try again.");
+    }
+  };
+
+  const handleConfirmComplete = async (id: string, kind: "incoming" | "mine") => {
+    try {
+      const { data } = await api.post<ApiOrder>(`/orders/${id}/confirm-complete`);
+      const mapped = mapApiOrder(data);
+      if (kind === "incoming") {
+        setRequests((prev) => prev.map((r) => (r.id === id ? mapped : r)));
+      } else {
+        setMyOrders((prev) => prev.map((r) => (r.id === id ? mapped : r)));
+      }
+    } catch {
+      toast.error("Couldn't confirm completion. Please try again.");
+    }
+  };
+
+  const refetchMyOrder = async (id: string) => {
+    try {
+      const { data } = await api.get<ApiOrder[]>("/orders/mine");
+      const updated = data.find((o) => o.id === id);
+      if (updated) {
+        setMyOrders((prev) => prev.map((r) => (r.id === id ? mapApiOrder(updated) : r)));
+      }
+    } catch {
+      // next load will pick up the real state; not worth surfacing an error here
     }
   };
 
@@ -159,6 +189,13 @@ const Dashboard = () => {
         requests={requests}
         onCancel={handleCancelRequest}
         onAdvance={handleAdvanceRequest}
+        onConfirmComplete={(id) => handleConfirmComplete(id, "incoming")}
+      />
+      <MyOrdersPanel
+        orders={myOrders}
+        buyerEmail={me?.email ?? ""}
+        onPaid={refetchMyOrder}
+        onConfirmComplete={(id) => handleConfirmComplete(id, "mine")}
       />
       <MyGigsPanel
         gigs={gigs}
