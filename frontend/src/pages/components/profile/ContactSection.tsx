@@ -11,7 +11,7 @@ const CONTACT_META: Record<
     { label: string; icon: React.ComponentType<{ size?: number; className?: string }>; placeholder: string; href: (v: string) => string }
 > = {
     email: { label: "Email address", icon: Mail, placeholder: "you@university.edu", href: (v) => `mailto:${v}` },
-    phone: { label: "Phone number", icon: Phone, placeholder: "+1 (555) 012-3456", href: (v) => `tel:${v}` },
+    phone: { label: "Phone number", icon: Phone, placeholder: "+233 XXX XXX XXX", href: (v) => `tel:${v}` },
     linkedin: { label: "LinkedIn", icon: AtSign, placeholder: "https://linkedin.com/in/…", href: (v) => v },
     github: { label: "GitHub", icon: FolderGit2, placeholder: "https://github.com/…", href: (v) => v },
     website: { label: "Personal website", icon: Globe, placeholder: "https://…", href: (v) => v },

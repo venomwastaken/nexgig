@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { toast } from "sonner";
+import { ImageOff, ImagePlus, Loader2 } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -10,10 +12,12 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useApi } from "@/hooks/useApi";
+import { cn } from "@/lib/utils";
 import { makePortfolioItemId, type PortfolioItem } from "@/lib/profile";
 
 const urlField = z
@@ -67,6 +71,8 @@ export default function PortfolioItemDialog({
     onSave,
 }: PortfolioItemDialogProps) {
     const isEditing = !!item;
+    const api = useApi();
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const form = useForm<PortfolioItemFormValues>({
         resolver: zodResolver(portfolioItemSchema),
@@ -79,6 +85,40 @@ export default function PortfolioItemDialog({
         if (open) form.reset(itemToFormValues(item));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, item]);
+
+    async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            toast.error("Only image files are supported.");
+            return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            toast.error("Images must be under 8MB.");
+            return;
+        }
+
+        setUploadingImage(true);
+        try {
+            const { data } = await api.post("/users/portfolio-presign", {
+                filename: file.name,
+                content_type: file.type,
+            });
+            await fetch(data.upload_url, {
+                method: "PUT",
+                headers: { "Content-Type": file.type },
+                body: file,
+            });
+            form.setValue("imageUrl", data.object_url, { shouldValidate: true, shouldDirty: true });
+        } catch (error) {
+            console.error("Portfolio image upload error", error);
+            toast.error("Couldn't upload that image. Please try again.");
+        } finally {
+            setUploadingImage(false);
+        }
+    }
 
     function onSubmit(values: PortfolioItemFormValues) {
         const normalizedTitle = values.title.trim().toLowerCase();
@@ -120,7 +160,10 @@ export default function PortfolioItemDialog({
 
                 <form
                     id="portfolio-item-form"
-                    onSubmit={form.handleSubmit(onSubmit)}
+                    onSubmit={(e) => {
+                        e.stopPropagation();
+                        void form.handleSubmit(onSubmit)(e);
+                    }}
                     className="flex flex-col gap-4"
                     noValidate
                 >
@@ -185,13 +228,48 @@ export default function PortfolioItemDialog({
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor={field.name}>Project image URL</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id={field.name}
-                                    aria-invalid={fieldState.invalid}
-                                    placeholder="https://…"
-                                />
+                                <FieldLabel htmlFor="portfolio-image-upload">Project image</FieldLabel>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input bg-(--nex-surface-2)">
+                                        {field.value ? (
+                                            <img
+                                                src={field.value}
+                                                alt="Project preview"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <ImageOff size={20} className="text-muted-foreground" />
+                                        )}
+                                    </div>
+                                    <label
+                                        htmlFor="portfolio-image-upload"
+                                        className={cn(
+                                            "flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-input px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground",
+                                            uploadingImage && "pointer-events-none opacity-60",
+                                        )}
+                                    >
+                                        {uploadingImage ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin" />
+                                                Uploading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ImagePlus size={16} />
+                                                {field.value ? "Change image" : "Upload image"}
+                                            </>
+                                        )}
+                                    </label>
+                                    <input
+                                        id="portfolio-image-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        disabled={uploadingImage}
+                                        className="hidden"
+                                    />
+                                </div>
+                                <FieldDescription>PNG, JPG, WEBP or GIF up to 8MB.</FieldDescription>
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                             </Field>
                         )}
