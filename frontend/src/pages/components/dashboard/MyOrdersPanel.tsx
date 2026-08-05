@@ -10,7 +10,7 @@ import PayButton from "./PayButton";
 interface MyOrdersPanelProps {
   orders: IncomingRequest[];
   buyerEmail: string;
-  onPaid: (id: string) => void;
+  onPaid: (order: IncomingRequest) => void;
   onConfirmComplete: (id: string) => void;
   onCancel?: (id: string) => void;
 }
@@ -78,7 +78,7 @@ export default function MyOrdersPanel({
                       orderId={o.id}
                       price={o.price}
                       buyerEmail={buyerEmail}
-                      onPaid={() => onPaid(o.id)}
+                      onPaid={onPaid}
                     />
                   )}
                   {o.paymentStatus === "success" && o.status !== "completed" && (

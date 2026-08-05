@@ -26,6 +26,17 @@ class OrderStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
+class PaymentStatus(str, Enum):
+    PENDING = "pending"
+    SUCCESS = "success"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+
+class EscrowStatus(str, Enum):
+    HELD = "held"
+    RELEASED = "released"
+    REFUNDED = "refunded"
+
 class AccountStatus(str, Enum):
     active = "active"
     suspended = "suspended"
@@ -268,9 +279,37 @@ class GigOrder(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
+    # Paystack escrow flow. payment_status/escrow_status stay null until the buyer
+    # starts a checkout — a null payment_status means "no payment attempted yet",
+    # distinct from PaymentStatus.PENDING which means a Paystack transaction is in flight.
+    payment_status: Optional[PaymentStatus] = Field(default=None)
+    escrow_status: Optional[EscrowStatus] = Field(default=None)
+    payment_reference: Optional[str] = Field(default=None, max_length=100, index=True)
+    # Order status only advances requested->confirmed->in_progress automatically on
+    # payment; in_progress->completed needs both sides to confirm independently.
+    buyer_confirmed_at: Optional[datetime] = Field(default=None)
+    provider_confirmed_at: Optional[datetime] = Field(default=None)
+
     @property
     def id(self) -> uuid.UUID:
         return self.order_id
+
+
+class PayoutAccount(SQLModel, table=True):
+    __tablename__ = "payout_account"
+
+    id: UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="user_account.user_id", unique=True, index=True)
+    bank_code: str = Field(max_length=20)
+    bank_name: str = Field(max_length=200)
+    account_number: str = Field(max_length=50)
+    account_name: str = Field(max_length=200)
+    # Paystack Transfer Recipient — created once per payout account and reused for
+    # every escrow release, rather than re-registered on each transfer.
+    paystack_recipient_code: Optional[str] = Field(default=None, max_length=100)
+    verified: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 # class Category(SQLModel, table=True):

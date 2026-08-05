@@ -1,13 +1,21 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
 import { useApi } from "@/hooks/useApi";
+import { ApiOrder, IncomingRequest, mapApiOrder } from "./types";
 
 interface PayButtonProps {
   orderId: string;
   price: number;
   buyerEmail: string;
-  onPaid: () => void;
+  onPaid: (order: IncomingRequest) => void;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return axios.isAxiosError(error) && error.response?.data?.detail
+    ? String(error.response.data.detail)
+    : fallback;
 }
 
 export default function PayButton({ orderId, price, buyerEmail, onPaid }: PayButtonProps) {
@@ -31,26 +39,28 @@ export default function PayButton({ orderId, price, buyerEmail, onPaid }: PayBut
       const handler = window.PaystackPop.setup({
         key: data.public_key,
         email: buyerEmail,
-        amount: 0, // ignored by Paystack once access_code is supplied — amount is already fixed server-side
+        amount: Math.round(data.amount * 100), // GHS -> pesewas; Paystack's inline widget validates this client-side even with access_code set
         ref: data.reference,
         access_code: data.access_code,
         currency: "GHS",
         onClose: () => setLoading(false),
-        onSuccess: async () => {
+        callback: async () => {
           try {
-            await api.post(`/payments/verify/${data.reference}`);
+            const { data: order } = await api.post<ApiOrder>(`/payments/verify/${data.reference}`);
             toast.success("Payment received — funds are held in escrow.");
-            onPaid();
-          } catch {
-            toast.error("Payment succeeded but we couldn't confirm it yet. It'll update shortly.");
+            onPaid(mapApiOrder(order));
+          } catch (error) {
+            toast.error(
+              errorMessage(error, "Payment succeeded but we couldn't confirm it yet. It'll update shortly."),
+            );
           } finally {
             setLoading(false);
           }
         },
       });
       handler.openIframe();
-    } catch {
-      toast.error("Couldn't start payment. Please try again.");
+    } catch (error) {
+      toast.error(errorMessage(error, "Couldn't start payment. Please try again."));
       setLoading(false);
     }
   };

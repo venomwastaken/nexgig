@@ -122,16 +122,8 @@ const Dashboard = () => {
     }
   };
 
-  const refetchMyOrder = async (id: string) => {
-    try {
-      const { data } = await api.get<ApiOrder[]>("/orders/mine");
-      const updated = data.find((o) => o.id === id);
-      if (updated) {
-        setMyOrders((prev) => prev.map((r) => (r.id === id ? mapApiOrder(updated) : r)));
-      }
-    } catch {
-      // next load will pick up the real state; not worth surfacing an error here
-    }
+  const handleOrderPaid = (order: IncomingRequest) => {
+    setMyOrders((prev) => prev.map((o) => (o.id === order.id ? order : o)));
   };
 
   const handleSaveGig = async (
@@ -205,7 +197,7 @@ const Dashboard = () => {
       <MyOrdersPanel
         orders={myOrders}
         buyerEmail={me?.email ?? ""}
-        onPaid={refetchMyOrder}
+        onPaid={handleOrderPaid}
         onConfirmComplete={(id) => handleConfirmComplete(id, "mine")}
         onCancel={handleCancelMyOrder}
       />

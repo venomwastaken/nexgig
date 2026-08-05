@@ -6,7 +6,7 @@ export interface PaystackSetupOptions {
   access_code?: string;
   currency?: string;
   onClose?: () => void;
-  onSuccess?: (transaction: { reference: string }) => void;
+  callback?: (transaction: { reference: string }) => void;
 }
 
 export interface PaystackHandler {

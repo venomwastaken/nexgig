@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     notifications,
     messaging,
     orders,
+    payments,
     reviews,
     skills,
     users,
@@ -22,5 +23,6 @@ api_router.include_router(messaging.router, prefix="/messaging", tags=["Messagin
 api_router.include_router(notifications.router, tags=["Notifications"])
 api_router.include_router(verification.router, prefix="/verification", tags=["Verification"])
 api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+api_router.include_router(payments.router, prefix="/payments", tags=["Payments"])
 api_router.include_router(reviews.router, tags=["Reviews"])
 api_router.include_router(comments.router, tags=["Comments"])

@@ -16,7 +16,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { useApi } from "@/hooks/useApi";
-import Button from "@/pages/ui/Button";
+import Button from "../ui/Button";
 
 interface Bank {
     name: string;
@@ -216,7 +216,7 @@ export default function PayoutAccountSection() {
                         ) : (
                             <Button
                                 type="button"
-                                className="w-auto"
+                                className="px-6"
                                 disabled={resolving}
                                 isLoading={resolving}
                                 loadingText="Verifying"
