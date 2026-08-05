@@ -5,7 +5,7 @@ from typing import Literal, Optional, List
 
 
 from pydantic import BaseModel, field_validator
-from app.models import GigStatus, OrderStatus
+from app.models import GigStatus, OrderStatus, PaymentStatus, EscrowStatus
 
 
 from sqlmodel import Field, SQLModel
@@ -315,8 +315,51 @@ class OrderRead(SQLModel):
     price: Decimal
     note: Optional[str] = None
     status: OrderStatus
+    payment_status: Optional[PaymentStatus] = None
+    escrow_status: Optional[EscrowStatus] = None
+    buyer_confirmed_at: Optional[datetime] = None
+    provider_confirmed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+
+
+# ---------- Payments (Paystack) ----------
+
+class BankRead(SQLModel):
+    name: str
+    code: str
+
+
+class PaymentInitializeRead(SQLModel):
+    reference: str
+    access_code: str
+    public_key: str
+    amount: Decimal
+
+
+class PayoutAccountRead(SQLModel):
+    bank_name: str
+    account_number: str
+    account_name: str
+    verified: bool
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PayoutAccountResolveRequest(SQLModel):
+    bank_code: str
+    account_number: str
+
+
+class PayoutAccountResolveRead(SQLModel):
+    account_name: str
+
+
+class PayoutAccountUpsert(SQLModel):
+    bank_code: str
+    bank_name: str
+    account_number: str
 
 
 # ---------- Messaging ----------

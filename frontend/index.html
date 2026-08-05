@@ -3,8 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://js.paystack.co/v2/inline.js"></script>
-    <script src="https://paystack.co"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" rel="stylesheet">
@@ -13,6 +11,9 @@
   <body>
     <!-- main.tsx looks for this exact id and renders the React app into it -->
     <div id="root"></div>
+    <!-- Paystack Inline checkout — see PayButton.tsx. Loaded globally instead of
+         via npm (react-paystack's peer deps don't target React 19 cleanly). -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

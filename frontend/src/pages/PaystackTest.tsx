@@ -1,6 +1,6 @@
 declare global {
     interface Window {
-        PaystackPop: any;
+        PaystackPop?: any;
     }
 }
 

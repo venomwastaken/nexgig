@@ -6,7 +6,7 @@ import WelcomeCard from "./components/dashboard/WelcomeCard";
 import StatsRow from "./components/dashboard/StatsRow";
 import MyGigsPanel from "./components/dashboard/MyGigsPanel";
 import ServiceRequestsPanel from "./components/dashboard/ServiceRequestsPanel";
-import OrderedServicesPanel from "./components/dashboard/OrderedServicesPanel";
+import MyOrdersPanel from "./components/dashboard/MyOrdersPanel";
 import { useApi } from "@/hooks/useApi";
 import {
   ApiMe,
@@ -15,11 +15,9 @@ import {
   IncomingRequest,
   Me,
   MyGig,
-  OrderedService,
   mapApiMe,
   mapApiMyGig,
   mapApiOrder,
-  mapApiOrderToOrderedService,
   nextOrderStatus,
 } from "./components/dashboard/types";
 
@@ -28,7 +26,7 @@ const Dashboard = () => {
   const [me, setMe] = useState<Me | null>(null);
   const [gigs, setGigs] = useState<MyGig[]>([]);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
-  const [myOrders, setMyOrders] = useState<OrderedService[]>([]);
+  const [myOrders, setMyOrders] = useState<IncomingRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +48,7 @@ const Dashboard = () => {
             .map(mapApiMyGig)
         );
         setRequests(requestsRes.data.map(mapApiOrder));
-        setMyOrders(myOrdersRes.data.map(mapApiOrderToOrderedService));
+        setMyOrders(myOrdersRes.data.map(mapApiOrder));
       })
       .catch(() => {
         if (!cancelled) toast.error("Couldn't load your dashboard. Please try again.");
@@ -104,12 +102,28 @@ const Dashboard = () => {
       const { data } = await api.patch<ApiOrder>(`/orders/${id}/status`, {
         status: "cancelled",
       });
-      setMyOrders((prev) =>
-        prev.map((o) => (o.id === id ? mapApiOrderToOrderedService(data) : o))
-      );
+      setMyOrders((prev) => prev.map((o) => (o.id === id ? mapApiOrder(data) : o)));
     } catch {
       toast.error("Couldn't cancel this order. Please try again.");
     }
+  };
+
+  const handleConfirmComplete = async (id: string, kind: "incoming" | "mine") => {
+    try {
+      const { data } = await api.post<ApiOrder>(`/orders/${id}/confirm-complete`);
+      const mapped = mapApiOrder(data);
+      if (kind === "incoming") {
+        setRequests((prev) => prev.map((r) => (r.id === id ? mapped : r)));
+      } else {
+        setMyOrders((prev) => prev.map((r) => (r.id === id ? mapped : r)));
+      }
+    } catch {
+      toast.error("Couldn't confirm completion. Please try again.");
+    }
+  };
+
+  const handleOrderPaid = (order: IncomingRequest) => {
+    setMyOrders((prev) => prev.map((o) => (o.id === order.id ? order : o)));
   };
 
   const handleSaveGig = async (
@@ -178,8 +192,15 @@ const Dashboard = () => {
         requests={requests}
         onCancel={handleCancelRequest}
         onAdvance={handleAdvanceRequest}
+        onConfirmComplete={(id) => handleConfirmComplete(id, "incoming")}
       />
-      <OrderedServicesPanel orders={myOrders} onCancel={handleCancelMyOrder} />
+      <MyOrdersPanel
+        orders={myOrders}
+        buyerEmail={me?.email ?? ""}
+        onPaid={handleOrderPaid}
+        onConfirmComplete={(id) => handleConfirmComplete(id, "mine")}
+        onCancel={handleCancelMyOrder}
+      />
       <MyGigsPanel
         gigs={gigs}
         onSave={handleSaveGig}
