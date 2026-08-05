@@ -20,12 +20,13 @@ app.include_router(api_router, prefix="/api/v1")
 # different origin (this API, http://localhost:8000). This middleware
 # tells FastAPI to explicitly allow that specific frontend origin.
 #
-# In production, swap this list for your real deployed frontend URL
-# (e.g. https://nexgig.vercel.app) — leaving "*" or localhost in a
-# production config would defeat the point of the protection.
+# ALLOWED_ORIGINS is a comma-separated list so the deployed frontend
+# (e.g. https://nexgig.vercel.app) can be added via an env var without
+# a code change — set it in Railway/Render, leave it unset for local dev.
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[origin.strip() for origin in _allowed_origins.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

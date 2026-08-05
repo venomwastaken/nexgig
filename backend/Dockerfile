@@ -18,4 +18,7 @@ COPY app ./app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# No --reload here: that's a dev-only convenience (docker-compose.yml
+# passes it in separately for local work). $PORT is set by hosts like
+# Railway/Render at runtime; 8000 is the fallback for `docker run` locally.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
