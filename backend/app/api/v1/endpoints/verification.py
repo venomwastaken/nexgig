@@ -8,9 +8,9 @@ from email.utils import parseaddr
 
 from app.core.database import get_db
 from app.api.v1.endpoints.users import get_or_create_user
-from app.models import StudentVerification, VerificationStatus
+from app.models import AccountStatus, StudentVerification, UserAccount, VerificationStatus
 from app.schemas import EmailRequestIn, EmailConfirmIn
-from app.email import send_email 
+from app.email import send_email
 
 CODE_TTL_MINUTES = 10
 MAX_SEND_ATTEMPTS_PER_HOUR = 5
@@ -142,5 +142,16 @@ def confirm_email_code(
     record.email_code_hash = None
     record.email_code_expires_at = None
     session.add(record)
+
+    # `user` comes from a dependency chain bound to a different Session than
+    # `session`, so it can't be mutated and added here directly — look up the
+    # row fresh in this session instead.
+    account = session.exec(
+        select(UserAccount).where(UserAccount.user_id == user.user_id)
+    ).first()
+    if account and account.account_status == AccountStatus.pending_verification:
+        account.account_status = AccountStatus.active
+        session.add(account)
+
     session.commit()
     return {"status": "verified"}

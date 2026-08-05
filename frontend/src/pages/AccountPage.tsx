@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +29,11 @@ import Button from "@/pages/ui/Button";
 
 // ---------- Types (mirrors backend/app/schemas.py) ----------
 
-type AccountStatus = "pending_verification" | "active" | "suspended" | "deactivated";
+type AccountStatus =
+    | "pending_verification"
+    | "active"
+    | "suspended"
+    | "deactivated";
 
 interface ProfileData {
     id: string;
@@ -110,7 +114,11 @@ export default function AccountPage() {
     const [account, setAccount] = useState<AccountData | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [verifying, setVerifying] = useState(false);
+    const [verificationStep, setVerificationStep] = useState<"email" | "code">("email");
+    const [schoolEmail, setSchoolEmail] = useState("");
+    const [verificationCode, setVerificationCode] = useState("");
+    const [sendingCode, setSendingCode] = useState(false);
+    const [confirmingCode, setConfirmingCode] = useState(false);
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -168,8 +176,13 @@ export default function AccountPage() {
                 bio: values.bio,
                 avatar_url: values.avatarUrl,
             };
-            const response = await api.patch<ProfileData>("/users/me/profile", payload);
-            setAccount((prev) => (prev ? { ...prev, profile: response.data } : prev));
+            const response = await api.patch<ProfileData>(
+                "/users/me/profile",
+                payload,
+            );
+            setAccount((prev) =>
+                prev ? { ...prev, profile: response.data } : prev,
+            );
             toast.success("Profile updated successfully!");
         } catch (error) {
             const message =
@@ -180,31 +193,60 @@ export default function AccountPage() {
         }
     }
 
-    async function handleVerify() {
-        setVerifying(true);
+    async function handleSendCode(event: FormEvent) {
+        event.preventDefault();
+        setSendingCode(true);
         try {
-            const response = await api.post<{ account_status: AccountStatus }>(
-                "/users/me/verify",
-            );
+            await api.post("/verification/email/request", {
+                email: schoolEmail,
+            });
+            setVerificationStep("code");
+            toast.success(`Verification code sent to ${schoolEmail}.`);
+        } catch (error) {
+            const message =
+                axios.isAxiosError(error) && error.response?.data?.detail
+                    ? String(error.response.data.detail)
+                    : "Failed to send a verification code. Please try again.";
+            toast.error(message);
+        } finally {
+            setSendingCode(false);
+        }
+    }
+
+    async function handleConfirmCode(event: FormEvent) {
+        event.preventDefault();
+        setConfirmingCode(true);
+        try {
+            await api.post("/verification/email/confirm", {
+                code: verificationCode,
+            });
             setAccount((prev) =>
-                prev ? { ...prev, account_status: response.data.account_status } : prev,
+                prev ? { ...prev, account_status: "active" } : prev,
             );
             toast.success("Your account is now verified!");
         } catch (error) {
             const message =
                 axios.isAxiosError(error) && error.response?.data?.detail
                     ? String(error.response.data.detail)
-                    : "Failed to verify your account. Please try again.";
+                    : "Failed to confirm your code. Please try again.";
             toast.error(message);
         } finally {
-            setVerifying(false);
+            setConfirmingCode(false);
         }
+    }
+
+    function handleUseDifferentEmail() {
+        setVerificationStep("email");
+        setVerificationCode("");
     }
 
     if (loading) {
         return (
             <div className="flex justify-center py-24">
-                <Loader2 className="animate-spin text-muted-foreground" size={28} />
+                <Loader2
+                    className="animate-spin text-muted-foreground"
+                    size={28}
+                />
             </div>
         );
     }
@@ -235,19 +277,24 @@ export default function AccountPage() {
                             <CardTitle>Account</CardTitle>
                             <CardDescription>{account.email}</CardDescription>
                         </div>
-                        <span className={statusBadgeClass(account.account_status)}>
+                        <span
+                            className={statusBadgeClass(account.account_status)}
+                        >
                             {statusLabel(account.account_status)}
                         </span>
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
-                    <p className="text-sm text-muted">
+                    <p className="text-sm text-muted-foreground">
                         Member since{" "}
-                        {new Date(account.created_at).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                        })}
+                        {new Date(account.created_at).toLocaleDateString(
+                            undefined,
+                            {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                            },
+                        )}
                     </p>
 
                     {account.wallet && (
@@ -255,13 +302,17 @@ export default function AccountPage() {
                             <div className="rounded-md bg-(--nex-surface-2) p-3">
                                 <p className="text-label">Available</p>
                                 <p className="text-lg font-semibold text-(--nex-text)">
-                                    {formatTokens(account.wallet.available_tokens)}
+                                    {formatTokens(
+                                        account.wallet.available_tokens,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-md bg-(--nex-surface-2) p-3">
                                 <p className="text-label">Escrowed</p>
                                 <p className="text-lg font-semibold text-(--nex-text)">
-                                    {formatTokens(account.wallet.tokens_escrowed)}
+                                    {formatTokens(
+                                        account.wallet.tokens_escrowed,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-md bg-(--nex-surface-2) p-3">
@@ -281,28 +332,109 @@ export default function AccountPage() {
 
                     {/* Verification */}
                     {account.account_status === "pending_verification" && (
-                        <div className="alert flex items-center justify-between gap-4 border border-(--nex-border) bg-(--nex-surface-2)">
+                        <div className="alert flex flex-col items-start gap-4 border border-(--nex-border) bg-(--nex-surface-2)">
                             <div className="flex items-start gap-2">
                                 <ShieldAlert
                                     size={18}
                                     className="mt-0.5 shrink-0 text-(--nex-text-muted)"
                                 />
                                 <p className="text-sm text-(--nex-text-muted)">
-                                    {canRequestVerification
-                                        ? "Your profile looks complete. Request verification to unlock full access."
-                                        : "Fill out your name and username below before requesting verification."}
+                                    {!canRequestVerification
+                                        ? "Fill out your name and username below before requesting verification."
+                                        : verificationStep === "email"
+                                          ? "Verify with your school (.edu) email to unlock full access."
+                                          : `Enter the code we sent to ${schoolEmail}.`}
                                 </p>
                             </div>
-                            <Button
-                                type="button"
-                                className="w-auto shrink-0"
-                                disabled={!canRequestVerification || verifying}
-                                isLoading={verifying}
-                                loadingText="Verifying"
-                                onClick={handleVerify}
-                            >
-                                Request verification
-                            </Button>
+
+                            {canRequestVerification &&
+                                verificationStep === "email" && (
+                                    <form
+                                        onSubmit={handleSendCode}
+                                        className="flex w-full flex-col gap-3 sm:flex-row sm:items-end"
+                                    >
+                                        <Field className="flex-1">
+                                            <FieldLabel htmlFor="schoolEmail">
+                                                School email
+                                            </FieldLabel>
+                                            <Input
+                                            className="w-full h-10"
+                                                id="schoolEmail"
+                                                type="email"
+                                                placeholder="you@school.edu"
+                                                value={schoolEmail}
+                                                onChange={(e) =>
+                                                    setSchoolEmail(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                        </Field>
+                                        <Button
+                                            type="submit"
+                                            className="px-6 sm:w-auto"
+                                            disabled={
+                                                sendingCode || !schoolEmail
+                                            }
+                                            isLoading={sendingCode}
+                                            loadingText="Sending"
+                                        >
+                                            Send code
+                                        </Button>
+                                    </form>
+                                )}
+
+                            {canRequestVerification &&
+                                verificationStep === "code" && (
+                                    <form
+                                        onSubmit={handleConfirmCode}
+                                        className="flex w-full flex-col gap-3 sm:flex-row sm:items-end"
+                                    >
+                                        <Field className="flex-1">
+                                            <FieldLabel htmlFor="verificationCode">
+                                                Verification code
+                                            </FieldLabel>
+                                            <Input
+                                                id="verificationCode"
+                                                inputMode="numeric"
+                                                placeholder="123456"
+                                                value={verificationCode}
+                                                onChange={(e) =>
+                                                    setVerificationCode(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                        </Field>
+                                        <div className="flex shrink-0 gap-2">
+                                            <Button
+                                                type="submit"
+                                                className="w-auto"
+                                                disabled={
+                                                    confirmingCode ||
+                                                    !verificationCode
+                                                }
+                                                isLoading={confirmingCode}
+                                                loadingText="Confirming"
+                                            >
+                                                Confirm
+                                            </Button>
+                                        </div>
+                                    </form>
+                                )}
+
+                            {canRequestVerification &&
+                                verificationStep === "code" && (
+                                    <button
+                                        type="button"
+                                        className="text-sm text-(--nex-text-muted) underline underline-offset-2"
+                                        onClick={handleUseDifferentEmail}
+                                    >
+                                        Use a different email
+                                    </button>
+                                )}
                         </div>
                     )}
 
@@ -316,8 +448,8 @@ export default function AccountPage() {
                     {(account.account_status === "suspended" ||
                         account.account_status === "deactivated") && (
                         <div className="alert alert-error">
-                            Your account is {account.account_status}. Contact support to
-                            resolve this.
+                            Your account is {account.account_status}. Contact
+                            support to resolve this.
                         </div>
                     )}
                 </CardContent>
@@ -329,8 +461,8 @@ export default function AccountPage() {
                     <CardHeader>
                         <CardTitle>Profile</CardTitle>
                         <CardDescription>
-                            Update the details other students see on your gigs and
-                            applications.
+                            Update the details other students see on your gigs
+                            and applications.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -346,18 +478,27 @@ export default function AccountPage() {
                                             name="firstName"
                                             control={form.control}
                                             render={({ field, fieldState }) => (
-                                                <Field data-invalid={fieldState.invalid}>
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
                                                     <FieldLabel htmlFor="firstName">
                                                         First Name
                                                     </FieldLabel>
                                                     <Input
                                                         {...field}
                                                         id="firstName"
-                                                        aria-invalid={fieldState.invalid}
+                                                        aria-invalid={
+                                                            fieldState.invalid
+                                                        }
                                                     />
                                                     {fieldState.error && (
                                                         <FieldError>
-                                                            {fieldState.error.message}
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
                                                         </FieldError>
                                                     )}
                                                 </Field>
@@ -369,18 +510,27 @@ export default function AccountPage() {
                                             name="lastName"
                                             control={form.control}
                                             render={({ field, fieldState }) => (
-                                                <Field data-invalid={fieldState.invalid}>
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
                                                     <FieldLabel htmlFor="lastName">
                                                         Last Name
                                                     </FieldLabel>
                                                     <Input
                                                         {...field}
                                                         id="lastName"
-                                                        aria-invalid={fieldState.invalid}
+                                                        aria-invalid={
+                                                            fieldState.invalid
+                                                        }
                                                     />
                                                     {fieldState.error && (
                                                         <FieldError>
-                                                            {fieldState.error.message}
+                                                            {
+                                                                fieldState.error
+                                                                    .message
+                                                            }
                                                         </FieldError>
                                                     )}
                                                 </Field>
@@ -395,14 +545,18 @@ export default function AccountPage() {
                                     name="username"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="username">
                                                 Username
                                             </FieldLabel>
                                             <Input
                                                 {...field}
                                                 id="username"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                             />
                                             {fieldState.error && (
                                                 <FieldError>
@@ -417,12 +571,18 @@ export default function AccountPage() {
                                     name="bio"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
-                                            <FieldLabel htmlFor="bio">Bio</FieldLabel>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <FieldLabel htmlFor="bio">
+                                                Bio
+                                            </FieldLabel>
                                             <Textarea
                                                 {...field}
                                                 id="bio"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 className="min-h-30"
                                             />
                                             {fieldState.error && (
@@ -438,18 +598,23 @@ export default function AccountPage() {
                                     name="avatarUrl"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="avatarUrl">
                                                 Avatar URL
                                             </FieldLabel>
                                             <Input
                                                 {...field}
                                                 id="avatarUrl"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 placeholder="https://example.com/avatar.png"
                                             />
                                             <FieldDescription>
-                                                Provide a link to your profile picture.
+                                                Provide a link to your profile
+                                                picture.
                                             </FieldDescription>
                                             {fieldState.error && (
                                                 <FieldError>
@@ -466,7 +631,7 @@ export default function AccountPage() {
                         <Button
                             type="submit"
                             form="account-profile-form"
-                            className="w-full sm:w-auto"
+                            className="px-6 sm:w-auto"
                             disabled={form.formState.isSubmitting}
                             isLoading={form.formState.isSubmitting}
                             loadingText="Saving"
@@ -480,8 +645,8 @@ export default function AccountPage() {
                     <CardHeader>
                         <CardTitle>Finish setting up your profile</CardTitle>
                         <CardDescription>
-                            You haven&apos;t created a profile yet, so there&apos;s nothing
-                            to edit here.
+                            You haven&apos;t created a profile yet, so
+                            there&apos;s nothing to edit here.
                         </CardDescription>
                     </CardHeader>
                     <CardFooter>

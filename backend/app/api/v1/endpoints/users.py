@@ -23,6 +23,7 @@ from app.core.database import get_db
 from app.core.storage import (
     ALLOWED_IMAGE_CONTENT_TYPES,
     build_avatar_object_key,
+    build_portfolio_object_key,
     generate_presigned_put,
     public_url_for_key,
 )
@@ -229,6 +230,24 @@ def presign_avatar(
         raise HTTPException(status_code=400, detail="Only image uploads are supported")
 
     object_key = build_avatar_object_key(user.user_id, payload.filename)
+    try:
+        upload_url = generate_presigned_put(object_key, payload.content_type)
+        object_url = public_url_for_key(object_key)
+    except KeyError:
+        raise HTTPException(status_code=503, detail="Image uploads aren't configured yet")
+
+    return AttachmentPresignResponse(upload_url=upload_url, object_url=object_url, object_key=object_key)
+
+
+@router.post("/portfolio-presign", response_model=AttachmentPresignResponse)
+def presign_portfolio_image(
+    payload: AttachmentPresignRequest,
+    user: UserAccount = Depends(get_or_create_user),
+):
+    if payload.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Only image uploads are supported")
+
+    object_key = build_portfolio_object_key(user.user_id, payload.filename)
     try:
         upload_url = generate_presigned_put(object_key, payload.content_type)
         object_url = public_url_for_key(object_key)

@@ -9,6 +9,7 @@ import {
     MessageCircle,
     ChevronDown,
     User as UserIcon,
+    Briefcase,
     LogOut,
 } from "lucide-react";
 import { Show, useClerk, useUser } from "@clerk/react";
@@ -196,6 +197,12 @@ export default function Navbar() {
                                     </DropdownMenuGroup>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
+                                        onClick={() => navigate("/profile")}
+                                    >
+                                        <Briefcase />
+                                        Freelancer Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
                                         onClick={() => navigate("/account")}
                                     >
                                         <UserIcon />
@@ -308,6 +315,13 @@ export default function Navbar() {
                                 className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
                             >
                                 Messages
+                            </Link>
+                            <Link
+                                to="/profile"
+                                onClick={() => setMobileOpen(false)}
+                                className="rounded-md border-2 border-[#2F2F2F] bg-transparent px-4 py-2.5 text-center text-sm font-medium text-[#ffffff]"
+                            >
+                                Freelancer Profile
                             </Link>
                             <Link
                                 to="/notifications"
