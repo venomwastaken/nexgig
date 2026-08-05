@@ -11,6 +11,7 @@ import {
     User as UserIcon,
     Briefcase,
     LogOut,
+    LayoutGrid,
 } from "lucide-react";
 import { Show, useClerk, useUser } from "@clerk/react";
 import Logo from "./Logo";
@@ -207,6 +208,12 @@ export default function Navbar() {
                                     >
                                         <UserIcon />
                                         Account
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => navigate("/dashboard")}
+                                    >
+                                        <LayoutGrid />
+                                        Dashboard
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
