@@ -18,6 +18,8 @@ import AboutUs from './pages/AboutUs';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
+import FreelancerProfile from './pages/FreelancerProfile';
+import ProfileEdit from './pages/ProfileEdit';
 
 export default function App() {
     return (
@@ -85,6 +87,22 @@ export default function App() {
                         element={
                             <RequireAuth>
                                 <AccountPage />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/profile"
+                        element={
+                            <RequireAuth>
+                                <FreelancerProfile />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/profile/edit"
+                        element={
+                            <RequireAuth>
+                                <ProfileEdit />
                             </RequireAuth>
                         }
                     />
